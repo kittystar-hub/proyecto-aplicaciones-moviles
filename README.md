@@ -1,1 +1,1 @@
-# proyecto-aplicaciones-moviles
+# Proyecto de desarrollo Fundación Textil
