@@ -29,6 +29,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
+import android.content.Intent
+import android.net.Uri
 
 //Paleta de colores para el tema de la aplicación
 private val Turquesa = Color(0xFF168C8C)
@@ -118,11 +120,13 @@ fun PantallaBienvenida(
 
             OutlinedButton(
                 onClick = {
-                    Toast.makeText(
-                        contexto,
-                        "En Construcción",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    val direccion = Uri.parse("https://www.textilcircular.cl/")
+
+                    val intent = Intent(
+                        Intent.ACTION_VIEW,
+                        direccion
+                    )
+                    contexto.startActivity(intent)
                 },
                 modifier = Modifier
                     .fillMaxWidth()
