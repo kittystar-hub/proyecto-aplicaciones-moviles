@@ -37,7 +37,10 @@ private val Fondo = Color(0xFFFFFEFA)
 private val Negro = Color(0xFF202020)
 
 @Composable
-fun PantallaBienvenida(modifier: Modifier = Modifier) {
+fun PantallaBienvenida(
+    modifier: Modifier = Modifier,
+    alExplorarCatalogo: () -> Unit = {}
+){
     val contexto = LocalContext.current
 
     Surface(
@@ -94,13 +97,7 @@ fun PantallaBienvenida(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(36.dp))
 
             Button(
-                onClick = {
-                    Toast.makeText(
-                        contexto,
-                        "En Construcción",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                },
+                onClick = alExplorarCatalogo,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),

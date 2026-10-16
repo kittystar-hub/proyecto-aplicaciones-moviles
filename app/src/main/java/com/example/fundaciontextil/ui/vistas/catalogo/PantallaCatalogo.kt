@@ -19,6 +19,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.layout.Row
+import androidx.compose.ui.Alignment
 
 private val Turquesa = Color(0xFF168C8C)
 private val Negro = Color(0xFF202020)
@@ -52,12 +55,24 @@ private val emprendimientosPrueba = listOf(
 )
 
 @Composable
-fun PantallaCatalogo() {
+fun PantallaCatalogo(
+    modifier: Modifier = Modifier,
+    alVolver: () -> Unit = {}
+) {
     Column(
         modifier = Modifier
             .fillMaxSize()
             .padding(top = 24.dp)
     ) {
+        TextButton(
+            onClick = alVolver,
+            modifier = Modifier.padding(start = 8.dp)
+        ) {
+            Text(
+                text = "← Volver",
+                color = Turquesa
+            )
+        }
         Text(
             text = "Catálogo textil",
             style = MaterialTheme.typography.headlineMedium,
