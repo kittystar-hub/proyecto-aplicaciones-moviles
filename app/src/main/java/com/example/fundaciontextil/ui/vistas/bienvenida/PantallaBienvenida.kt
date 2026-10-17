@@ -29,6 +29,8 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
+import android.content.Intent
+import android.net.Uri
 
 //Paleta de colores para el tema de la aplicación
 private val Turquesa = Color(0xFF168C8C)
@@ -37,7 +39,10 @@ private val Fondo = Color(0xFFFFFEFA)
 private val Negro = Color(0xFF202020)
 
 @Composable
-fun PantallaBienvenida(modifier: Modifier = Modifier) {
+fun PantallaBienvenida(
+    modifier: Modifier = Modifier,
+    alExplorarCatalogo: () -> Unit = {}
+){
     val contexto = LocalContext.current
 
     Surface(
@@ -94,13 +99,7 @@ fun PantallaBienvenida(modifier: Modifier = Modifier) {
             Spacer(modifier = Modifier.height(36.dp))
 
             Button(
-                onClick = {
-                    Toast.makeText(
-                        contexto,
-                        "En Construcción",
-                        Toast.LENGTH_SHORT
-                    ).show()
-                },
+                onClick = alExplorarCatalogo,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(56.dp),
@@ -121,11 +120,13 @@ fun PantallaBienvenida(modifier: Modifier = Modifier) {
 
             OutlinedButton(
                 onClick = {
-                    Toast.makeText(
-                        contexto,
-                        "En Construcción",
-                        Toast.LENGTH_SHORT
-                    ).show()
+                    val direccion = Uri.parse("https://www.textilcircular.cl/")
+
+                    val intent = Intent(
+                        Intent.ACTION_VIEW,
+                        direccion
+                    )
+                    contexto.startActivity(intent)
                 },
                 modifier = Modifier
                     .fillMaxWidth()

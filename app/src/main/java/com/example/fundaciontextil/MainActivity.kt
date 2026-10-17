@@ -1,4 +1,3 @@
-
 package com.example.fundaciontextil
 
 import android.os.Bundle
@@ -8,9 +7,11 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
 import com.example.fundaciontextil.ui.vistas.bienvenida.PantallaBienvenida
+import com.example.fundaciontextil.ui.vistas.catalogo.PantallaCatalogo
 
 class MainActivity : ComponentActivity() {
 
@@ -21,12 +22,33 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             FundacionTextilTheme {
+                var pantallaActual by remember {
+                    mutableStateOf("bienvenida")
+                }
+
                 Scaffold(
                     modifier = Modifier.fillMaxSize()
                 ) { espacioInterior ->
-                    PantallaBienvenida(
-                        modifier = Modifier.padding(espacioInterior)
-                    )
+
+                    when (pantallaActual) {
+                        "bienvenida" -> {
+                            PantallaBienvenida(
+                                modifier = Modifier.padding(espacioInterior),
+                                alExplorarCatalogo = {
+                                    pantallaActual = "catalogo"
+                                }
+                            )
+                        }
+
+                        "catalogo" -> {
+                            PantallaCatalogo(
+                                modifier = Modifier.padding(espacioInterior),
+                                alVolver = {
+                                    pantallaActual = "bienvenida"
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
