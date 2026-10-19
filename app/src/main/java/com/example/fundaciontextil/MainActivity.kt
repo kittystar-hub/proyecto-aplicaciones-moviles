@@ -9,9 +9,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
 import com.example.fundaciontextil.ui.vistas.bienvenida.PantallaBienvenida
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaCatalogo
+import com.example.fundaciontextil.viewmodel.CatalogoViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -22,6 +24,7 @@ class MainActivity : ComponentActivity() {
 
         setContent {
             FundacionTextilTheme {
+                val catalogoViewModel: CatalogoViewModel = viewModel()
                 var pantallaActual by remember {
                     mutableStateOf("bienvenida")
                 }
@@ -43,6 +46,7 @@ class MainActivity : ComponentActivity() {
                         "catalogo" -> {
                             PantallaCatalogo(
                                 modifier = Modifier.padding(espacioInterior),
+                                viewModel = catalogoViewModel,
                                 alVolver = {
                                     pantallaActual = "bienvenida"
                                 }
