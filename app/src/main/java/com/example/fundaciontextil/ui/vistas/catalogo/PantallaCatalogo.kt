@@ -15,50 +15,26 @@ import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.material3.TextButton
-import androidx.compose.foundation.layout.Row
-import androidx.compose.ui.Alignment
+import com.example.fundaciontextil.model.Emprendimiento
+import com.example.fundaciontextil.viewmodel.CatalogoViewModel
 
 private val Turquesa = Color(0xFF168C8C)
 private val Negro = Color(0xFF202020)
 
-private data class Emprendimiento(
-    val nombre: String,
-    val categoria: String,
-    val ubicacion: String,
-    val descripcion: String
-)
-
-private val emprendimientosPrueba = listOf(
-    Emprendimiento(
-        nombre = "Emprendimiento 1",
-        categoria = "Prueba",
-        ubicacion = "Santiago",
-        descripcion = "Emprendimiento simulado para pruebas."
-    ),
-    Emprendimiento(
-        nombre = "Emprendimiento 2",
-        categoria = "Prueba",
-        ubicacion = "Valparaíso",
-        descripcion = "Emprendimiento simulado n°2"
-    ),
-    Emprendimiento(
-        nombre = "Emprendimiento 3",
-        categoria = "Prueba",
-        ubicacion = "Concepción",
-        descripcion = "Emprendimiento Simulado n°3"
-    )
-)
-
 @Composable
 fun PantallaCatalogo(
     modifier: Modifier = Modifier,
+    viewModel: CatalogoViewModel,
     alVolver: () -> Unit = {}
 ) {
+    val emprendimientos by viewModel.emprendimientos.collectAsState()
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -100,7 +76,7 @@ fun PantallaCatalogo(
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(emprendimientosPrueba) { emprendimiento ->
+            items(emprendimientos) { emprendimiento ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
