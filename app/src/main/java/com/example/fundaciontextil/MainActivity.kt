@@ -7,41 +7,50 @@ import androidx.activity.enableEdgeToEdge
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.tooling.preview.Preview
 import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
+import com.example.fundaciontextil.ui.vistas.bienvenida.PantallaBienvenida
+import com.example.fundaciontextil.ui.vistas.catalogo.PantallaCatalogo
 
 class MainActivity : ComponentActivity() {
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
         enableEdgeToEdge()
+
         setContent {
             FundacionTextilTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
+                var pantallaActual by remember {
+                    mutableStateOf("bienvenida")
+                }
+
+                Scaffold(
+                    modifier = Modifier.fillMaxSize()
+                ) { espacioInterior ->
+
+                    when (pantallaActual) {
+                        "bienvenida" -> {
+                            PantallaBienvenida(
+                                modifier = Modifier.padding(espacioInterior),
+                                alExplorarCatalogo = {
+                                    pantallaActual = "catalogo"
+                                }
+                            )
+                        }
+
+                        "catalogo" -> {
+                            PantallaCatalogo(
+                                modifier = Modifier.padding(espacioInterior),
+                                alVolver = {
+                                    pantallaActual = "bienvenida"
+                                }
+                            )
+                        }
+                    }
                 }
             }
         }
-    }
-}
-
-@Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
-}
-
-@Preview(showBackground = true)
-@Composable
-fun GreetingPreview() {
-    FundacionTextilTheme {
-        Greeting("Android")
     }
 }
