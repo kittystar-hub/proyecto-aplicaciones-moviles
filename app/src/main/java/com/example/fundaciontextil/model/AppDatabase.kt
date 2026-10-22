@@ -1,4 +1,4 @@
-package com.example.fundaciontextil.data.local
+package com.example.fundaciontextil.model
 
 import android.content.Context
 import androidx.room.Database

@@ -1,4 +1,4 @@
-package com.example.fundaciontextil.data.local
+package com.example.fundaciontextil.model
 
 import androidx.room.Entity
 import androidx.room.PrimaryKey

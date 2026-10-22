@@ -1,7 +1,4 @@
-package com.example.fundaciontextil.data.repository
-
-import com.example.fundaciontextil.data.local.Emprendedora
-import com.example.fundaciontextil.data.local.EmprendedoraDao
+package com.example.fundaciontextil.model
 
 class EmprendedoraRepository(private val dao: EmprendedoraDao) {
 

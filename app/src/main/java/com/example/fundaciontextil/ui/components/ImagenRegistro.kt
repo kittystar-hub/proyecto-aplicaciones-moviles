@@ -1,4 +1,4 @@
-package com.example.fundaciontextil.ui.vistas.registro.components
+package com.example.fundaciontextil.ui.components
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.size

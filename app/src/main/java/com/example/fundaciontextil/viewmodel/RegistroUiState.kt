@@ -1,6 +1,6 @@
-package com.example.fundaciontextil.ui.vistas.registro
+package com.example.fundaciontextil.viewmodel
 
-import com.example.fundaciontextil.data.ChileData
+import com.example.fundaciontextil.model.ChileData
 
 data class RegistroUiState(
     // Foto

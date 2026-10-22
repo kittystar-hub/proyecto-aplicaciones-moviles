@@ -1,4 +1,4 @@
-package com.example.fundaciontextil.data.validators
+package com.example.fundaciontextil.model
 
 
 //Validador para datos generales ingresados al formulario

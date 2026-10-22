@@ -1,4 +1,4 @@
-package com.example.fundaciontextil.ui.vistas.registro
+package com.example.fundaciontextil.viewmodel
 
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
@@ -6,11 +6,11 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.fundaciontextil.data.local.AppDatabase
-import com.example.fundaciontextil.data.local.Emprendedora
-import com.example.fundaciontextil.data.repository.EmprendedoraRepository
-import com.example.fundaciontextil.data.validators.RutValidator
-import com.example.fundaciontextil.data.validators.Validators
+import com.example.fundaciontextil.model.AppDatabase
+import com.example.fundaciontextil.model.Emprendedora
+import com.example.fundaciontextil.model.EmprendedoraRepository
+import com.example.fundaciontextil.model.RutValidator
+import com.example.fundaciontextil.model.Validators
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow

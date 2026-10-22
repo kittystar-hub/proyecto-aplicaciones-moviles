@@ -1,4 +1,4 @@
-package com.example.fundaciontextil.data.validators
+package com.example.fundaciontextil.model
 
 //Validador de formato de RUT, faltaria integrar conexión a BD de emprendedoras
 //Para poder verificar que existe

@@ -1,4 +1,4 @@
-package com.example.fundaciontextil.data
+package com.example.fundaciontextil.model
 
 object ChileData {
 
