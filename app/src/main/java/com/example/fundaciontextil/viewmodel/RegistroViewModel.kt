@@ -67,7 +67,7 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
         val errores = RegistroErrores(
             rut = when {
                 s.rut.isBlank() -> "El RUT es obligatorio"
-                !RutValidator.esValido(s.rut) -> "RUT inválido (ej: 12345678-9)"
+                !RutValidator.esValido(s.rut) -> "RUT inválido (ej: 12345678-5)"
                 else -> null
             },
             nombre = if (s.nombre.isBlank()) "El nombre es obligatorio" else null,
@@ -80,7 +80,7 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
             rubros = if (s.rubros.isEmpty()) "Selecciona al menos 1 rubro" else null,
             whatsapp = when {
                 s.whatsapp.isBlank() -> "El WhatsApp es obligatorio"
-                !Validators.esWhatsappChileno(s.whatsapp) -> "Formato inválido (ej: +56912345678)"
+                !Validators.esWhatsappChileno(s.whatsapp) -> "Formato inválido (ej: +56912345678 o 912345678)"
                 else -> null
             },
             email = when {
@@ -91,20 +91,28 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
             consentimiento = if (!s.consentimiento) "Debes autorizar el tratamiento de datos" else null
         )
 
-        val hayErrores = errores.javaClass.declaredFields.any { campo ->
-            campo.isAccessible = true
-            campo.get(errores) != null
+        // validacion explicita de los datos
+        val hayErrores = listOfNotNull(
+            errores.rut, errores.nombre, errores.rangoEtario, errores.genero,
+            errores.nombreTaller, errores.descripcion, errores.region, errores.comuna,
+            errores.rubros, errores.whatsapp, errores.email, errores.consentimiento
+        ).isNotEmpty()
+
+        _uiState.update {
+            it.copy(
+                errores = errores,
+                // Si hay errores, mostramos un mensaje general para avisar al usuario
+                errorGeneral = if (hayErrores) "Por favor, corrige los errores en rojo antes de guardar." else null
+            )
         }
 
-        _uiState.update { it.copy(errores = errores, errorGeneral = null) }
         if (hayErrores) return
 
         viewModelScope.launch {
-            _uiState.update { it.copy(guardando = true) }
+            _uiState.update { it.copy(guardando = true, errorGeneral = null) }
             try {
                 val id = repositorio.guardar(
                     Emprendimiento(
-                        //El catalogo deberia leer estos campos
                         nombre = s.nombreTaller.trim(),
                         categoria = s.rubros.firstOrNull() ?: "Textil",
                         ubicacion = s.comuna,
