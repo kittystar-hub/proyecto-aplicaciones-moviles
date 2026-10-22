@@ -7,8 +7,8 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.fundaciontextil.model.AppDatabase
-import com.example.fundaciontextil.model.Emprendedora
-import com.example.fundaciontextil.model.EmprendedoraRepository
+import com.example.fundaciontextil.model.Emprendimiento
+import com.example.fundaciontextil.model.EmprendimientoRepository
 import com.example.fundaciontextil.model.RutValidator
 import com.example.fundaciontextil.model.Validators
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -19,91 +19,48 @@ import kotlinx.coroutines.launch
 
 class RegistroViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repositorio = EmprendedoraRepository(
-        AppDatabase.get(application).emprendedoraDao()
+    private val repositorio = EmprendimientoRepository(
+        AppDatabase.get(application).emprendimientoDao()
     )
 
     private val _uiState = MutableStateFlow(RegistroUiState())
     val uiState: StateFlow<RegistroUiState> = _uiState.asStateFlow()
 
-    //Actualizadores de los campos
     fun actualizarFoto(uri: String?) = _uiState.update { it.copy(fotoUri = uri) }
 
-    fun actualizarRut(v: String) = _uiState.update {
-        it.copy(rut = v, errores = it.errores.copy(rut = null))
-    }
-
-    fun actualizarNombre(v: String) = _uiState.update {
-        it.copy(nombre = v, errores = it.errores.copy(nombre = null))
-    }
-
-    fun actualizarRangoEtario(v: String) = _uiState.update {
-        it.copy(rangoEtario = v, errores = it.errores.copy(rangoEtario = null))
-    }
-
-    fun actualizarGenero(v: String) = _uiState.update {
-        it.copy(genero = v, errores = it.errores.copy(genero = null))
-    }
-
-    fun actualizarNombreTaller(v: String) = _uiState.update {
-        it.copy(nombreTaller = v, errores = it.errores.copy(nombreTaller = null))
-    }
+    fun actualizarRut(v: String) = _uiState.update { it.copy(rut = v, errores = it.errores.copy(rut = null)) }
+    fun actualizarNombre(v: String) = _uiState.update { it.copy(nombre = v, errores = it.errores.copy(nombre = null)) }
+    fun actualizarRangoEtario(v: String) = _uiState.update { it.copy(rangoEtario = v, errores = it.errores.copy(rangoEtario = null)) }
+    fun actualizarGenero(v: String) = _uiState.update { it.copy(genero = v, errores = it.errores.copy(genero = null)) }
+    fun actualizarNombreTaller(v: String) = _uiState.update { it.copy(nombreTaller = v, errores = it.errores.copy(nombreTaller = null)) }
 
     fun actualizarDescripcion(v: String) {
-        if (v.length <= 300) _uiState.update {
-            it.copy(descripcion = v, errores = it.errores.copy(descripcion = null))
-        }
+        if (v.length <= 300) _uiState.update { it.copy(descripcion = v, errores = it.errores.copy(descripcion = null)) }
     }
 
     fun actualizarRegion(region: String) = _uiState.update {
-        it.copy(
-            region = region,
-            comuna = "",
-            errores = it.errores.copy(region = null, comuna = null)
-        )
+        it.copy(region = region, comuna = "", errores = it.errores.copy(region = null, comuna = null))
     }
 
-    fun actualizarComuna(comuna: String) = _uiState.update {
-        it.copy(comuna = comuna, errores = it.errores.copy(comuna = null))
-    }
+    fun actualizarComuna(comuna: String) = _uiState.update { it.copy(comuna = comuna, errores = it.errores.copy(comuna = null)) }
 
     fun alternarRubro(rubro: String) {
         _uiState.update { estado ->
             val actuales = estado.rubros
             when {
-                rubro in actuales ->
-                    estado.copy(
-                        rubros = actuales - rubro,
-                        errores = estado.errores.copy(rubros = null)
-                    )
-                actuales.size >= 2 ->
-                    estado.copy(errores = estado.errores.copy(rubros = "Máximo 2 rubros seleccionables"))
-                else ->
-                    estado.copy(
-                        rubros = actuales + rubro,
-                        errores = estado.errores.copy(rubros = null)
-                    )
+                rubro in actuales -> estado.copy(rubros = actuales - rubro, errores = estado.errores.copy(rubros = null))
+                actuales.size >= 2 -> estado.copy(errores = estado.errores.copy(rubros = "Máximo 2 rubros seleccionables"))
+                else -> estado.copy(rubros = actuales + rubro, errores = estado.errores.copy(rubros = null))
             }
         }
     }
 
-    fun actualizarWhatsapp(v: String) = _uiState.update {
-        it.copy(whatsapp = v, errores = it.errores.copy(whatsapp = null))
-    }
+    fun actualizarWhatsapp(v: String) = _uiState.update { it.copy(whatsapp = v, errores = it.errores.copy(whatsapp = null)) }
+    fun actualizarEmail(v: String) = _uiState.update { it.copy(email = v, errores = it.errores.copy(email = null)) }
+    fun actualizarConsentimiento(v: Boolean) = _uiState.update { it.copy(consentimiento = v, errores = it.errores.copy(consentimiento = null)) }
 
-    fun actualizarEmail(v: String) = _uiState.update {
-        it.copy(email = v, errores = it.errores.copy(email = null))
-    }
+    fun consumirGuardado() = _uiState.update { it.copy(guardadoExitoso = false, idGuardado = null) }
 
-    fun actualizarConsentimiento(v: Boolean) = _uiState.update {
-        it.copy(consentimiento = v, errores = it.errores.copy(consentimiento = null))
-    }
-
-    fun consumirGuardado() = _uiState.update {
-        it.copy(guardadoExitoso = false, idGuardado = null)
-    }
-
-    //Validar los datos y guardad
     fun guardar() {
         val s = _uiState.value
 
@@ -134,7 +91,6 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
             consentimiento = if (!s.consentimiento) "Debes autorizar el tratamiento de datos" else null
         )
 
-        // Verificación inteligente de errores
         val hayErrores = errores.javaClass.declaredFields.any { campo ->
             campo.isAccessible = true
             campo.get(errores) != null
@@ -147,14 +103,18 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
             _uiState.update { it.copy(guardando = true) }
             try {
                 val id = repositorio.guardar(
-                    Emprendedora(
+                    Emprendimiento(
+                        //El catalogo deberia leer estos campos
+                        nombre = s.nombreTaller.trim(),
+                        categoria = s.rubros.firstOrNull() ?: "Textil",
+                        ubicacion = s.comuna,
+                        descripcion = s.descripcion.trim(),
+
                         fotoUri = s.fotoUri,
                         rut = RutValidator.normalizar(s.rut),
-                        nombre = s.nombre.trim(),
                         rangoEtario = s.rangoEtario,
                         genero = s.genero,
                         nombreTaller = s.nombreTaller.trim(),
-                        descripcion = s.descripcion.trim(),
                         region = s.region,
                         comuna = s.comuna,
                         rubros = s.rubros.joinToString(","),
@@ -163,13 +123,9 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
                         consentimiento = s.consentimiento
                     )
                 )
-                _uiState.update {
-                    it.copy(guardando = false, guardadoExitoso = true, idGuardado = id)
-                }
+                _uiState.update { it.copy(guardando = false, guardadoExitoso = true, idGuardado = id) }
             } catch (e: Exception) {
-                _uiState.update {
-                    it.copy(guardando = false, errorGeneral = "Error al guardar: ${e.localizedMessage}")
-                }
+                _uiState.update { it.copy(guardando = false, errorGeneral = "Error al guardar: ${e.localizedMessage}") }
             }
         }
     }
