@@ -16,7 +16,7 @@ import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
 
 @Composable
-fun ImagenInteligente(
+fun ImagenRegistro(
     fotoUri: String?,
     modifier: Modifier = Modifier
 ) {
@@ -45,5 +45,5 @@ fun ImagenInteligente(
 @Preview(showBackground = true)
 @Composable
 fun ImagenRegistroPreview() {
-    ImagenInteligente(fotoUri = null)
+    ImagenRegistro(fotoUri = null)
 }
