@@ -1,51 +1,64 @@
 package com.example.fundaciontextil.ui.components
 
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.MenuAnchorType
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.input.VisualTransformation
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CampoTexto(
-    valor: String,
-    onValorCambio: (String) -> Unit,
+fun SelectorDesplegable(
     label: String,
-    placeholder: String,
-    error: String?,
-    keyboardType: KeyboardType = KeyboardType.Text,
+    valor: String,
+    opciones: List<String>,
+    onSeleccionar: (String) -> Unit,
     modifier: Modifier = Modifier,
-    //Permite ocultar el texto si es una contraseña
-    visualTransformation: VisualTransformation = VisualTransformation.None
+    habilitado: Boolean = true,
+    error: String? = null
 ) {
-    OutlinedTextField(
-        value = valor,
-        onValueChange = onValorCambio,
-        label = { Text(label) },
-        placeholder = { Text(placeholder) },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = keyboardType),
-        isError = error != null,
-        supportingText = error?.let { { Text(it) } },
-        visualTransformation = visualTransformation,
-        modifier = modifier,
-        shape = RoundedCornerShape(12.dp)
-    )
-}
+    var expanded by remember { mutableStateOf(false) }
 
-@Preview(showBackground = true)
-@Composable
-fun CampoTextoPreview() {
-    CampoTexto(
-        valor = "",
-        onValorCambio = {},
-        label = "Correo Electrónico",
-        placeholder = "ejemplo@correo.com",
-        error = "El correo no es válido"
-    )
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { if (habilitado) expanded = it }
+    ) {
+        OutlinedTextField(
+            value = valor,
+            onValueChange = {},
+            readOnly = true,
+            enabled = habilitado,
+            label = { Text(label) },
+            placeholder = { Text(if (habilitado) "Seleccionar" else "Selecciona región primero") },
+            trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded) },
+            isError = error != null,
+            supportingText = error?.let { { Text(it) } },
+            modifier = Modifier
+                .fillMaxWidth()
+                .menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = habilitado),
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            opciones.forEach { opcion ->
+                DropdownMenuItem(
+                    text = { Text(opcion) },
+                    onClick = {
+                        onSeleccionar(opcion)
+                        expanded = false
+                    }
+                )
+            }
+        }
+    }
 }
