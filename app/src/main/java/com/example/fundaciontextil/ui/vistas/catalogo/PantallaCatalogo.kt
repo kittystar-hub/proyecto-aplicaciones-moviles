@@ -34,6 +34,7 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import androidx.compose.foundation.layout.Row
 import coil.compose.AsyncImage
 
 private val Turquesa = Color(0xFF168C8C)
@@ -54,6 +55,14 @@ fun PantallaCatalogo(
         mutableStateOf(false)
     }
 
+    var comunaSeleccionada by remember {
+        mutableStateOf("Todas")
+    }
+
+    var menuComunasExpandido by remember {
+        mutableStateOf(false)
+    }
+
     val regiones = listOf("Todas") +
             emprendimientos
                 .map { it.region.ifBlank { it.ubicacion }.trim() }
@@ -61,15 +70,35 @@ fun PantallaCatalogo(
                 .distinct()
                 .sorted()
 
-    val emprendimientosFiltrados =
-        if (regionSeleccionada == "Todas") {
+    val comunas = listOf("Todas") +
             emprendimientos
-        } else {
-            emprendimientos.filter {
-                it.region.ifBlank { it.ubicacion }
-                    .trim()
-                    .equals(regionSeleccionada, ignoreCase = true)
-            }
+                .filter {
+                    regionSeleccionada == "Todas" ||
+                            it.region.ifBlank { it.ubicacion }
+                                .trim()
+                                .equals(regionSeleccionada, ignoreCase = true)
+                }
+                .map { it.comuna.trim() }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .sorted()
+
+    val emprendimientosFiltrados =
+        emprendimientos.filter { emprendimiento ->
+            val region = emprendimiento.region
+                .ifBlank { emprendimiento.ubicacion }
+                .trim()
+
+            val coincideRegion =
+                regionSeleccionada == "Todas" ||
+                        region.equals(regionSeleccionada, ignoreCase = true)
+
+            val coincideComuna =
+                comunaSeleccionada == "Todas" ||
+                        emprendimiento.comuna.trim()
+                            .equals(comunaSeleccionada, ignoreCase = true)
+
+            coincideRegion && coincideComuna
         }
     Column(
         modifier = Modifier
@@ -107,41 +136,101 @@ fun PantallaCatalogo(
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
         ) {
-            Text(
-                text = "Filtrar por región",
-                style = MaterialTheme.typography.titleSmall
-            )
 
-            Spacer(modifier = Modifier.height(4.dp))
-
-            androidx.compose.foundation.layout.Box {
-                Button(
-                    onClick = {
-                        menuRegionesExpandido = true
-                    }
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp)
+            ) {
+                // Filtro de región
+                Column(
+                    modifier = Modifier.weight(1f)
                 ) {
-                    Text(text = regionSeleccionada)
-                }
+                    Text(
+                        text = "Región",
+                        style = MaterialTheme.typography.titleSmall
+                    )
 
-                DropdownMenu(
-                    expanded = menuRegionesExpandido,
-                    onDismissRequest = {
-                        menuRegionesExpandido = false
-                    }
-                ) {
-                    regiones.forEach { region ->
-                        DropdownMenuItem(
-                            text = {
-                                Text(text = region)
-                            },
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    androidx.compose.foundation.layout.Box {
+                        Button(
                             onClick = {
-                                regionSeleccionada = region
+                                menuRegionesExpandido = true
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = regionSeleccionada,
+                                maxLines = 1
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = menuRegionesExpandido,
+                            onDismissRequest = {
                                 menuRegionesExpandido = false
                             }
-                        )
+                        ) {
+                            regiones.forEach { region ->
+                                DropdownMenuItem(
+                                    text = { Text(region) },
+                                    onClick = {
+                                        regionSeleccionada = region
+                                        comunaSeleccionada = "Todas"
+                                        menuRegionesExpandido = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                // Filtro de comuna
+                Column(
+                    modifier = Modifier.weight(1f)
+                ) {
+                    Text(
+                        text = "Comuna",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    androidx.compose.foundation.layout.Box {
+                        Button(
+                            onClick = {
+                                menuComunasExpandido = true
+                            },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = comunaSeleccionada,
+                                maxLines = 1
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = menuComunasExpandido,
+                            onDismissRequest = {
+                                menuComunasExpandido = false
+                            }
+                        ) {
+                            comunas.forEach { comuna ->
+                                DropdownMenuItem(
+                                    text = { Text(comuna) },
+                                    onClick = {
+                                        comunaSeleccionada = comuna
+                                        menuComunasExpandido = false
+                                    }
+                                )
+                            }
+                        }
                     }
                 }
             }
+
         }
 
         Spacer(modifier = Modifier.height(12.dp))
