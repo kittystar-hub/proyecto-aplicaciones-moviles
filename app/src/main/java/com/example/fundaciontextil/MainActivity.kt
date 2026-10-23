@@ -71,6 +71,7 @@ class MainActivity : ComponentActivity() {
                                     pantallaActual = "bienvenida"
                                 },
                                 alGuardarExitoso = { id ->
+                                    catalogoViewModel.cargarEmprendimientos()
                                     idGuardado = id //
                                     pantallaActual = "confirmacion"
                                 }
