@@ -83,6 +83,25 @@ fun PantallaCatalogo(
                 .distinct()
                 .sorted()
 
+    var rubroSeleccionado by remember { mutableStateOf("Todos") }
+    var menuRubrosExpandido by remember { mutableStateOf(false) }
+
+    val rubros = listOf("Todos") +
+            emprendimientos
+                .flatMap { emprendimiento ->
+                    val rubrosTexto = emprendimiento.rubros
+                        .ifBlank { emprendimiento.categoria }
+
+                    rubrosTexto
+                        .split(",")
+                        .map { it.trim() }
+                        .filter { it.isNotBlank() }
+                }
+                .distinct()
+                .sorted()
+
+
+
     val emprendimientosFiltrados =
         emprendimientos.filter { emprendimiento ->
             val region = emprendimiento.region
@@ -98,8 +117,20 @@ fun PantallaCatalogo(
                         emprendimiento.comuna.trim()
                             .equals(comunaSeleccionada, ignoreCase = true)
 
-            coincideRegion && coincideComuna
+            val rubrosEmprendimiento = emprendimiento.rubros
+                .ifBlank { emprendimiento.categoria }
+                .split(",")
+                .map { it.trim() }
+
+            val coincideRubro =
+                rubroSeleccionado == "Todos" ||
+                        rubrosEmprendimiento.any {
+                            it.equals(rubroSeleccionado, ignoreCase = true)
+                        }
+
+            coincideRegion && coincideComuna && coincideRubro
         }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -223,6 +254,41 @@ fun PantallaCatalogo(
                                     onClick = {
                                         comunaSeleccionada = comuna
                                         menuComunasExpandido = false
+                                    }
+                                )
+                            }
+                        }
+                    }
+                }
+
+                Column(modifier = Modifier.weight(1f)) {
+                    Text(
+                        text = "Rubro",
+                        style = MaterialTheme.typography.titleSmall
+                    )
+                    Spacer(modifier = Modifier.height(4.dp))
+
+                    androidx.compose.foundation.layout.Box {
+                        Button(
+                            onClick = { menuRubrosExpandido = true },
+                            modifier = Modifier.fillMaxWidth()
+                        ) {
+                            Text(
+                                text = rubroSeleccionado,
+                                maxLines = 1
+                            )
+                        }
+
+                        DropdownMenu(
+                            expanded = menuRubrosExpandido,
+                            onDismissRequest = { menuRubrosExpandido = false }
+                        ) {
+                            rubros.forEach { rubro ->
+                                DropdownMenuItem(
+                                    text = { Text(rubro) },
+                                    onClick = {
+                                        rubroSeleccionado = rubro
+                                        menuRubrosExpandido = false
                                     }
                                 )
                             }
