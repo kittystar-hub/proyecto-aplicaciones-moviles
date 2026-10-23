@@ -1,4 +1,3 @@
-
 package com.example.fundaciontextil.viewmodel
 
 import android.app.Application
