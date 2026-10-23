@@ -24,6 +24,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.material3.TextButton
 import com.example.fundaciontextil.model.Emprendimiento
 import com.example.fundaciontextil.viewmodel.CatalogoViewModel
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import coil.compose.AsyncImage
 
 private val Turquesa = Color(0xFF168C8C)
 private val Negro = Color(0xFF202020)
@@ -89,6 +94,20 @@ fun PantallaCatalogo(
                     Column(
                         modifier = Modifier.padding(16.dp)
                     ) {
+                        if (!emprendimiento.fotoUri.isNullOrBlank()) {
+                            AsyncImage(
+                                model = emprendimiento.fotoUri,
+                                contentDescription = "Fotografía de ${emprendimiento.nombre}",
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .aspectRatio(16f / 9f)
+                                    .clip(RoundedCornerShape(12.dp)),
+                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                            )
+
+                            Spacer(modifier = Modifier.height(12.dp))
+                        }
+
                         Text(
                             text = emprendimiento.nombre,
                             style = MaterialTheme.typography.titleMedium,
