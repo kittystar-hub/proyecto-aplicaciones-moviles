@@ -40,7 +40,8 @@ private val Negro = Color(0xFF202020)
 @Composable
 fun PantallaBienvenida(
     modifier: Modifier = Modifier,
-    alExplorarCatalogo: () -> Unit = {}
+    alExplorarCatalogo: () -> Unit = {},
+    alRegistrarme: () -> Unit = {}
 ){
     val contexto = LocalContext.current
 
@@ -110,6 +111,27 @@ fun PantallaBienvenida(
             ) {
                 Text(
                     text = "Explorar catálogo",
+                    fontSize = 17.sp,
+                    fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            //Ir a registro
+            Button(
+                onClick = alRegistrarme,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = Amarillo,
+                    contentColor = Negro
+                )
+            ) {
+                Text(
+                    text = "Crear mi ficha",
                     fontSize = 17.sp,
                     fontWeight = FontWeight.SemiBold
                 )

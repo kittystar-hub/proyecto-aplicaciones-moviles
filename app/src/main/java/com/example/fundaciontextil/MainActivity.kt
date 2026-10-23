@@ -14,6 +14,8 @@ import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
 import com.example.fundaciontextil.ui.vistas.bienvenida.PantallaBienvenida
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaCatalogo
 import com.example.fundaciontextil.viewmodel.CatalogoViewModel
+import com.example.fundaciontextil.ui.RegistroScreen
+import com.example.fundaciontextil.ui.PantallaConfirmacion
 
 class MainActivity : ComponentActivity() {
 
@@ -25,8 +27,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             FundacionTextilTheme {
                 val catalogoViewModel: CatalogoViewModel = viewModel()
+
                 var pantallaActual by remember {
                     mutableStateOf("bienvenida")
+                }
+
+                var idGuardado by remember {
+                    mutableStateOf<Long?>(null)
                 }
 
                 Scaffold(
@@ -39,6 +46,10 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(espacioInterior),
                                 alExplorarCatalogo = {
                                     pantallaActual = "catalogo"
+                                },
+
+                                alRegistrarme = {
+                                    pantallaActual = "registro"
                                 }
                             )
                         }
@@ -48,6 +59,30 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(espacioInterior),
                                 viewModel = catalogoViewModel,
                                 alVolver = {
+                                    pantallaActual = "bienvenida"
+                                }
+                            )
+                        }
+
+                        "registro" -> {
+                            RegistroScreen(
+                                modifier = Modifier.padding(espacioInterior),
+                                alVolver = {
+                                    pantallaActual = "bienvenida"
+                                },
+                                alGuardarExitoso = { id ->
+                                    idGuardado = id //
+                                    pantallaActual = "confirmacion"
+                                }
+                            )
+                        }
+
+
+                        "confirmacion" -> {
+                            PantallaConfirmacion(
+                                id = idGuardado,
+                                modifier = Modifier.padding(espacioInterior),
+                                alVolverAlInicio = {
                                     pantallaActual = "bienvenida"
                                 }
                             )
