@@ -28,6 +28,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.ui.draw.clip
+import androidx.compose.material3.Button
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import coil.compose.AsyncImage
 
 private val Turquesa = Color(0xFF168C8C)
@@ -40,6 +46,31 @@ fun PantallaCatalogo(
     alVolver: () -> Unit = {}
 ) {
     val emprendimientos by viewModel.emprendimientos.collectAsState()
+    var regionSeleccionada by remember {
+        mutableStateOf("Todas")
+    }
+
+    var menuRegionesExpandido by remember {
+        mutableStateOf(false)
+    }
+
+    val regiones = listOf("Todas") +
+            emprendimientos
+                .map { it.region.ifBlank { it.ubicacion }.trim() }
+                .filter { it.isNotBlank() }
+                .distinct()
+                .sorted()
+
+    val emprendimientosFiltrados =
+        if (regionSeleccionada == "Todas") {
+            emprendimientos
+        } else {
+            emprendimientos.filter {
+                it.region.ifBlank { it.ubicacion }
+                    .trim()
+                    .equals(regionSeleccionada, ignoreCase = true)
+            }
+        }
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -71,6 +102,49 @@ fun PantallaCatalogo(
         )
 
         Spacer(modifier = Modifier.height(20.dp))
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+        ) {
+            Text(
+                text = "Filtrar por región",
+                style = MaterialTheme.typography.titleSmall
+            )
+
+            Spacer(modifier = Modifier.height(4.dp))
+
+            androidx.compose.foundation.layout.Box {
+                Button(
+                    onClick = {
+                        menuRegionesExpandido = true
+                    }
+                ) {
+                    Text(text = regionSeleccionada)
+                }
+
+                DropdownMenu(
+                    expanded = menuRegionesExpandido,
+                    onDismissRequest = {
+                        menuRegionesExpandido = false
+                    }
+                ) {
+                    regiones.forEach { region ->
+                        DropdownMenuItem(
+                            text = {
+                                Text(text = region)
+                            },
+                            onClick = {
+                                regionSeleccionada = region
+                                menuRegionesExpandido = false
+                            }
+                        )
+                    }
+                }
+            }
+        }
+
+        Spacer(modifier = Modifier.height(12.dp))
 
         LazyColumn(
             modifier = Modifier.fillMaxSize(),
@@ -81,7 +155,7 @@ fun PantallaCatalogo(
             ),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            items(emprendimientos) { emprendimiento ->
+            items(emprendimientosFiltrados) { emprendimiento ->
                 Card(
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
