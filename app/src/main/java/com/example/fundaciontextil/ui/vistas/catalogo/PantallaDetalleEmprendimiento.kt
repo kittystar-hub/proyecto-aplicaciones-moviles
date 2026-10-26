@@ -28,6 +28,9 @@ import coil.compose.AsyncImage
 import com.example.fundaciontextil.model.Emprendimiento
 import com.example.fundaciontextil.viewmodel.GaleriaViewModel
 import java.io.File
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.material3.OutlinedButton
 
 @Composable
 fun PantallaDetalleEmprendimiento(
@@ -36,6 +39,17 @@ fun PantallaDetalleEmprendimiento(
     alVolver: () -> Unit
 ) {
     val fotos by galeriaViewModel.fotos.collectAsState()
+
+    val selectorImagen = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null) {
+            galeriaViewModel.agregarFoto(
+                idEmprendimiento = emprendimiento.id,
+                uri = uri
+            )
+        }
+    }
 
     LaunchedEffect(emprendimiento.id) {
         galeriaViewModel.cargarFotos(emprendimiento.id)
@@ -112,6 +126,17 @@ fun PantallaDetalleEmprendimiento(
             text = "Galería de productos",
             style = MaterialTheme.typography.titleLarge
         )
+
+        Spacer(modifier = Modifier.height(8.dp))
+
+        OutlinedButton(
+            onClick = {
+                selectorImagen.launch("image/*")
+            },
+            modifier = Modifier.fillMaxWidth()
+        ) {
+            Text("Agregar fotografía de producto")
+        }
 
         Spacer(modifier = Modifier.height(12.dp))
 
