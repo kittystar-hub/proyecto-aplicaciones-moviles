@@ -34,6 +34,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.foundation.layout.Row
 import coil.compose.AsyncImage
+import com.example.fundaciontextil.model.Emprendimiento
 
 private val Turquesa = Color(0xFF168C8C)
 private val Negro = Color(0xFF202020)
@@ -42,7 +43,8 @@ private val Negro = Color(0xFF202020)
 fun PantallaCatalogo(
     modifier: Modifier = Modifier,
     viewModel: CatalogoViewModel,
-    alVolver: () -> Unit = {}
+    alVolver: () -> Unit = {},
+    alSeleccionar: (Emprendimiento) -> Unit = {}
 ) {
     val emprendimientos by viewModel.emprendimientos.collectAsState()
     var regionSeleccionada by remember {
@@ -310,6 +312,9 @@ fun PantallaCatalogo(
         ) {
             items(emprendimientosFiltrados) { emprendimiento ->
                 Card(
+                    onClick = {
+                        alSeleccionar(emprendimiento)
+                    },
                     modifier = Modifier.fillMaxWidth(),
                     colors = CardDefaults.cardColors(
                         containerColor = Color(0xFFFFFEFA)
