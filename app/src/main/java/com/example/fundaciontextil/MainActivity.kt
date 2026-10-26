@@ -19,6 +19,7 @@ import com.example.fundaciontextil.ui.PantallaConfirmacion
 import com.example.fundaciontextil.model.Emprendimiento
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaDetalleEmprendimiento
 import com.example.fundaciontextil.viewmodel.GaleriaViewModel
+import com.example.fundaciontextil.ui.vistas.mensajeria.PantallaMensajeria
 
 class MainActivity : ComponentActivity() {
 
@@ -105,13 +106,22 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-
                         "confirmacion" -> {
                             PantallaConfirmacion(
                                 id = idGuardado,
                                 modifier = Modifier.padding(espacioInterior),
                                 alVolverAlInicio = {
                                     pantallaActual = "bienvenida"
+                                }
+                            )
+                        }
+
+                        "mensajeria" -> {
+                            PantallaMensajeria(
+                                modifier = Modifier.padding(espacioInterior),
+                                nombreEmprendimiento = emprendimientoSeleccionado?.nombre ?: "Taller Textil Circular",
+                                alVolver = {
+                                    pantallaActual = if (emprendimientoSeleccionado != null) "detalle" else "catalogo"
                                 }
                             )
                         }
