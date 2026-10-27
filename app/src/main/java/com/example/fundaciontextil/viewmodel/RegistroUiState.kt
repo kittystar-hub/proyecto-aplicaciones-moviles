@@ -1,7 +1,5 @@
 package com.example.fundaciontextil.viewmodel
 
-import com.example.fundaciontextil.model.ChileData
-
 data class RegistroUiState(
     // Foto
     val fotoUri: String? = null,
@@ -27,11 +25,10 @@ data class RegistroUiState(
     val guardando: Boolean = false,
     val guardadoExitoso: Boolean = false,
     val idGuardado: Long? = null,
-    val errorGeneral: String? = null
-) {
-    val comunasDisponibles: List<String>
-        get() = ChileData.comunasDe(region)
-}
+    val errorGeneral: String? = null,
+    // Lista de comunas (calculada en viewmodel)
+    val comunasDisponibles: List<String> = emptyList()
+)
 
 data class RegistroErrores(
     val rut: String? = null,

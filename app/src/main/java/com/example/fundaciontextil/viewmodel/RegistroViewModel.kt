@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.fundaciontextil.model.AppDatabase
+import com.example.fundaciontextil.model.ChileData // <-- IMPORT AGREGADO
 import com.example.fundaciontextil.model.Emprendimiento
 import com.example.fundaciontextil.model.EmprendimientoRepository
 import com.example.fundaciontextil.model.RutValidator
@@ -19,9 +20,10 @@ import kotlinx.coroutines.launch
 
 class RegistroViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val repositorio = EmprendimientoRepository(
-        AppDatabase.get(application).emprendimientoDao()
-    )
+    // lazy: la BD solo se abre al presionar "Guardar"(menos uso de recursos)
+    private val repositorio by lazy {
+        EmprendimientoRepository(AppDatabase.get(application).emprendimientoDao())
+    }
 
     private val _uiState = MutableStateFlow(RegistroUiState())
     val uiState: StateFlow<RegistroUiState> = _uiState.asStateFlow()
@@ -38,8 +40,14 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
         if (v.length <= 300) _uiState.update { it.copy(descripcion = v, errores = it.errores.copy(descripcion = null)) }
     }
 
+    // Actualización optimizada de la region
     fun actualizarRegion(region: String) = _uiState.update {
-        it.copy(region = region, comuna = "", errores = it.errores.copy(region = null, comuna = null))
+        it.copy(
+            region = region,
+            comuna = "",
+            comunasDisponibles = ChileData.comunasDe(region),
+            errores = it.errores.copy(region = null, comuna = null)
+        )
     }
 
     fun actualizarComuna(comuna: String) = _uiState.update { it.copy(comuna = comuna, errores = it.errores.copy(comuna = null)) }
@@ -91,7 +99,6 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
             consentimiento = if (!s.consentimiento) "Debes autorizar el tratamiento de datos" else null
         )
 
-        // validacion explicita de los datos
         val hayErrores = listOfNotNull(
             errores.rut, errores.nombre, errores.rangoEtario, errores.genero,
             errores.nombreTaller, errores.descripcion, errores.region, errores.comuna,
@@ -101,7 +108,6 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
         _uiState.update {
             it.copy(
                 errores = errores,
-                // Si hay errores, mostramos un mensaje general para avisar al usuario
                 errorGeneral = if (hayErrores) "Por favor, corrige los errores en rojo antes de guardar." else null
             )
         }
@@ -117,7 +123,6 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
                         categoria = s.rubros.firstOrNull() ?: "Textil",
                         ubicacion = s.comuna,
                         descripcion = s.descripcion.trim(),
-
                         fotoUri = s.fotoUri,
                         rut = RutValidator.normalizar(s.rut),
                         rangoEtario = s.rangoEtario,
