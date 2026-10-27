@@ -14,8 +14,8 @@ import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
 import com.example.fundaciontextil.ui.vistas.bienvenida.PantallaBienvenida
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaCatalogo
 import com.example.fundaciontextil.viewmodel.CatalogoViewModel
-import com.example.fundaciontextil.ui.RegistroScreen
-import com.example.fundaciontextil.ui.PantallaConfirmacion
+import com.example.fundaciontextil.ui.vistas.registro.RegistroScreen
+import com.example.fundaciontextil.ui.vistas.registro.PantallaConfirmacion
 import com.example.fundaciontextil.model.Emprendimiento
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaDetalleEmprendimiento
 import com.example.fundaciontextil.viewmodel.GaleriaViewModel

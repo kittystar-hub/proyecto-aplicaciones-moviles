@@ -1,4 +1,4 @@
-package com.example.fundaciontextil.ui
+package com.example.fundaciontextil.ui.vistas.registro
 
 import android.Manifest
 import android.app.Application
