@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
@@ -38,11 +39,11 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf<Emprendimiento?>(null)
                 }
 
-                var pantallaActual by remember {
+                var pantallaActual by rememberSaveable {
                     mutableStateOf("bienvenida")
                 }
 
-                var idGuardado by remember {
+                var idGuardado by rememberSaveable {
                     mutableStateOf<Long?>(null)
                 }
 
