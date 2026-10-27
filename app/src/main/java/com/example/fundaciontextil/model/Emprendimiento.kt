@@ -24,5 +24,6 @@ data class Emprendimiento(
     val email: String = "",
     val consentimiento: Boolean = false,
     val fechaRegistro: Long = System.currentTimeMillis(),
-    val password: String = ""
+    val contrasenia: String = "",
+    val confirmarConstrasenia: String = ""
 )

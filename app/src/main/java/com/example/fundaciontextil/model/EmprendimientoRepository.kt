@@ -8,5 +8,5 @@ class EmprendimientoRepository(private val dao: EmprendimientoDao) {
 
     suspend fun listar(): List<Emprendimiento> = dao.listarTodos()
 
-    suspend fun login(rut: String, password: String): Emprendimiento? = dao.login(rut, password)
+    suspend fun login(rut: String, contrasenia: String): Emprendimiento? = dao.login(rut, contrasenia)
 }

@@ -7,7 +7,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.example.fundaciontextil.model.AppDatabase
-import com.example.fundaciontextil.model.ChileData // <-- IMPORT AGREGADO
+import com.example.fundaciontextil.model.ChileData
 import com.example.fundaciontextil.model.Emprendimiento
 import com.example.fundaciontextil.model.EmprendimientoRepository
 import com.example.fundaciontextil.model.RutValidator
@@ -69,6 +69,9 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
 
     fun consumirGuardado() = _uiState.update { it.copy(guardadoExitoso = false, idGuardado = null) }
 
+    fun actualizarContrasenia(v: String) = _uiState.update { it.copy(contrasenia = v, errores = it.errores.copy(contrasenia = null)) }
+    fun actualizarConfirmarContrasenia(v: String) = _uiState.update { it.copy(confirmarContrasenia = v, errores = it.errores.copy(confirmarContrasenia = null)) }
+
     fun guardar() {
         val s = _uiState.value
 
@@ -76,6 +79,17 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
             rut = when {
                 s.rut.isBlank() -> "El RUT es obligatorio"
                 !RutValidator.esValido(s.rut) -> "RUT inválido (ej: 12345678-5)"
+                else -> null
+            },
+
+            contrasenia = when {
+                s.contrasenia.isBlank() -> "La contraseña es obligatoria"
+                s.contrasenia.length < 6 -> "Debe tener al menos 6 caracteres"
+                else -> null
+            },
+            confirmarContrasenia = when {
+                s.confirmarContrasenia.isBlank() -> "Confirma tu contraseña"
+                s.contrasenia != s.confirmarContrasenia -> "Las contraseñas no coinciden"
                 else -> null
             },
             nombre = if (s.nombre.isBlank()) "El nombre es obligatorio" else null,
@@ -102,7 +116,8 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
         val hayErrores = listOfNotNull(
             errores.rut, errores.nombre, errores.rangoEtario, errores.genero,
             errores.nombreTaller, errores.descripcion, errores.region, errores.comuna,
-            errores.rubros, errores.whatsapp, errores.email, errores.consentimiento
+            errores.rubros, errores.whatsapp, errores.email, errores.consentimiento,
+            errores.contrasenia, errores.confirmarContrasenia
         ).isNotEmpty()
 
         _uiState.update {
@@ -133,6 +148,7 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
                         rubros = s.rubros.joinToString(","),
                         whatsapp = Validators.normalizarWhatsapp(s.whatsapp),
                         email = s.email.trim(),
+                        contrasenia = s.contrasenia,
                         consentimiento = s.consentimiento
                     )
                 )

@@ -49,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -219,7 +220,22 @@ fun RegistroScreen(
             SeccionTitulo("Canales de contacto")
             CampoTexto(valor = state.whatsapp, onValorCambio = viewModel::actualizarWhatsapp, label = "WhatsApp", placeholder = "+56912345678", error = state.errores.whatsapp, keyboardType = KeyboardType.Phone)
             CampoTexto(valor = state.email, onValorCambio = viewModel::actualizarEmail, label = "Correo electrónico", placeholder = "correo@dominio.cl", error = state.errores.email, keyboardType = KeyboardType.Email)
-
+            CampoTexto(
+                valor = state.contrasenia,
+                onValorCambio = viewModel::actualizarContrasenia,
+                label = "Contraseña",
+                placeholder = "Mínimo 6 caracteres",
+                error = state.errores.contrasenia,
+                visualTransformation = PasswordVisualTransformation()
+            )
+            CampoTexto(
+                valor = state.confirmarContrasenia,
+                onValorCambio = viewModel::actualizarConfirmarContrasenia,
+                label = "Confirmar contraseña",
+                placeholder = "Repite tu contraseña",
+                error = state.errores.confirmarContrasenia,
+                visualTransformation = PasswordVisualTransformation()
+            )
             SeccionTitulo("Consentimiento legal")
             Column {
                 Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
@@ -252,6 +268,7 @@ fun RegistroScreen(
                 Spacer(Modifier.height(24.dp))
             }
         }
+
     }
 }
 
