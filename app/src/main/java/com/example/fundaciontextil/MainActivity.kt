@@ -14,12 +14,13 @@ import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
 import com.example.fundaciontextil.ui.vistas.bienvenida.PantallaBienvenida
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaCatalogo
 import com.example.fundaciontextil.viewmodel.CatalogoViewModel
-import com.example.fundaciontextil.ui.RegistroScreen
-import com.example.fundaciontextil.ui.PantallaConfirmacion
+import com.example.fundaciontextil.ui.vistas.registro.RegistroScreen
+import com.example.fundaciontextil.ui.vistas.registro.PantallaConfirmacion
 import com.example.fundaciontextil.model.Emprendimiento
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaDetalleEmprendimiento
 import com.example.fundaciontextil.viewmodel.GaleriaViewModel
-import com.example.fundaciontextil.ui.vistas.perfiles.PantallaEmprendedor // Importación añadida
+import com.example.fundaciontextil.ui.vistas.perfiles.PantallaEmprendedor
+import com.example.fundaciontextil.ui.vistas.mensajeria.PantallaMensajeria
 
 class MainActivity : ComponentActivity() {
 
@@ -120,7 +121,6 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-                        // Ruta para cargar el perfil del emprendedor y permitirle volver
                         "perfilEmprendedor" -> {
                             PantallaEmprendedor(
                                 onVolverClick = {
@@ -128,9 +128,19 @@ class MainActivity : ComponentActivity() {
                                 }
                             )
                         }
-                    }
-                }
-            }
-        }
-    }
-}
+
+                        "mensajeria" -> {
+                            PantallaMensajeria(
+                                modifier = Modifier.padding(paddingValues = espacioInterior),
+                                nombreEmprendimiento = emprendimientoSeleccionado?.nombre ?: "Taller Textil Circular",
+                                alVolver = {
+                                    pantallaActual = if (emprendimientoSeleccionado != null) "detalle" else "catalogo"
+                                }
+                            )
+                        }
+                    } // Cierra el bloque when
+                } // Cierra el Scaffold
+            } // Cierra FundacionTextilTheme
+        } // Cierra setContent
+    } // Cierra onCreate
+} // Cierra MainActivity
