@@ -38,7 +38,7 @@ class LoginViewModel(application: Application) : AndroidViewModel(application) {
 
     fun iniciarSesion() {
         val rutLimpio = RutValidator.normalizar(_rut.value)
-        val pass = _contrasenia.value // <-- CAMBIADO AQUÍ
+        val pass = _contrasenia.value
 
         if (rutLimpio.isBlank() || pass.isBlank()) {
             _error.value = "Debes ingresar RUT y contraseña"
