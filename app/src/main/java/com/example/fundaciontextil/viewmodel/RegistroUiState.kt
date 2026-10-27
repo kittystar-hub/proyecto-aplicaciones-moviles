@@ -17,6 +17,9 @@ data class RegistroUiState(
     // Contacto
     val whatsapp: String = "",
     val email: String = "",
+    //contraseña
+    val contrasenia: String = "",
+    val confirmarcontrasenia: String = "",
     // Legal
     val consentimiento: Boolean = false,
     // Errores centralizados
@@ -42,5 +45,7 @@ data class RegistroErrores(
     val rubros: String? = null,
     val whatsapp: String? = null,
     val email: String? = null,
+    val contrasenia: String? = null,
+    val confirmarcontrasenia: String? = null,
     val consentimiento: String? = null
 )
