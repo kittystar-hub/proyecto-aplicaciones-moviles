@@ -19,6 +19,7 @@ import com.example.fundaciontextil.ui.PantallaConfirmacion
 import com.example.fundaciontextil.model.Emprendimiento
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaDetalleEmprendimiento
 import com.example.fundaciontextil.viewmodel.GaleriaViewModel
+import com.example.fundaciontextil.ui.vistas.perfiles.PantallaEmprendedor // Importación añadida
 
 class MainActivity : ComponentActivity() {
 
@@ -59,7 +60,11 @@ class MainActivity : ComponentActivity() {
 
                                 alRegistrarme = {
                                     pantallaActual = "registro"
+                                },
+                                alVerPerfil = {
+                                    pantallaActual = "perfilEmprendedor"
                                 }
+
                             )
                         }
 
@@ -105,12 +110,20 @@ class MainActivity : ComponentActivity() {
                             )
                         }
 
-
                         "confirmacion" -> {
                             PantallaConfirmacion(
                                 id = idGuardado,
                                 modifier = Modifier.padding(espacioInterior),
                                 alVolverAlInicio = {
+                                    pantallaActual = "bienvenida"
+                                }
+                            )
+                        }
+
+                        // Ruta para cargar el perfil del emprendedor y permitirle volver
+                        "perfilEmprendedor" -> {
+                            PantallaEmprendedor(
+                                onVolverClick = {
                                     pantallaActual = "bienvenida"
                                 }
                             )
