@@ -16,6 +16,10 @@ import com.example.fundaciontextil.ui.vistas.catalogo.PantallaCatalogo
 import com.example.fundaciontextil.viewmodel.CatalogoViewModel
 import com.example.fundaciontextil.ui.RegistroScreen
 import com.example.fundaciontextil.ui.PantallaConfirmacion
+import com.example.fundaciontextil.model.Emprendimiento
+import com.example.fundaciontextil.ui.vistas.catalogo.PantallaDetalleEmprendimiento
+import com.example.fundaciontextil.viewmodel.GaleriaViewModel
+import com.example.fundaciontextil.ui.vistas.mensajeria.PantallaMensajeria
 
 class MainActivity : ComponentActivity() {
 
@@ -27,6 +31,12 @@ class MainActivity : ComponentActivity() {
         setContent {
             FundacionTextilTheme {
                 val catalogoViewModel: CatalogoViewModel = viewModel()
+
+                val galeriaViewModel: GaleriaViewModel = viewModel()
+
+                var emprendimientoSeleccionado by remember {
+                    mutableStateOf<Emprendimiento?>(null)
+                }
 
                 var pantallaActual by remember {
                     mutableStateOf("bienvenida")
@@ -60,8 +70,26 @@ class MainActivity : ComponentActivity() {
                                 viewModel = catalogoViewModel,
                                 alVolver = {
                                     pantallaActual = "bienvenida"
+                                },
+                                alSeleccionar = { emprendimiento ->
+                                    emprendimientoSeleccionado = emprendimiento
+                                    pantallaActual = "detalle"
                                 }
                             )
+                        }
+
+                        "detalle" -> {
+                            val emprendimiento = emprendimientoSeleccionado
+
+                            if (emprendimiento != null) {
+                                PantallaDetalleEmprendimiento(
+                                    emprendimiento = emprendimiento,
+                                    galeriaViewModel = galeriaViewModel,
+                                    alVolver = {
+                                        pantallaActual = "catalogo"
+                                    }
+                                )
+                            }
                         }
 
                         "registro" -> {
@@ -71,12 +99,12 @@ class MainActivity : ComponentActivity() {
                                     pantallaActual = "bienvenida"
                                 },
                                 alGuardarExitoso = { id ->
+                                    catalogoViewModel.cargarEmprendimientos()
                                     idGuardado = id //
                                     pantallaActual = "confirmacion"
                                 }
                             )
                         }
-
 
                         "confirmacion" -> {
                             PantallaConfirmacion(
@@ -84,6 +112,16 @@ class MainActivity : ComponentActivity() {
                                 modifier = Modifier.padding(espacioInterior),
                                 alVolverAlInicio = {
                                     pantallaActual = "bienvenida"
+                                }
+                            )
+                        }
+
+                        "mensajeria" -> {
+                            PantallaMensajeria(
+                                modifier = Modifier.padding(espacioInterior),
+                                nombreEmprendimiento = emprendimientoSeleccionado?.nombre ?: "Taller Textil Circular",
+                                alVolver = {
+                                    pantallaActual = if (emprendimientoSeleccionado != null) "detalle" else "catalogo"
                                 }
                             )
                         }
