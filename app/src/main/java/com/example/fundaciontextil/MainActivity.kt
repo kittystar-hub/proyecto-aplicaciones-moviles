@@ -125,6 +125,11 @@ class MainActivity : ComponentActivity() {
                             PantallaEmprendedor(
                                 onVolverClick = {
                                     pantallaActual = "bienvenida"
+                                },
+                                onMensajesClick = {
+                                    pantallaActual = "mensajeria"
+                                },
+                                onSolicitudesClick = {
                                 }
                             )
                         }
