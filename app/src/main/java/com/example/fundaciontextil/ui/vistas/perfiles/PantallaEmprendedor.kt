@@ -1,4 +1,5 @@
 package com.example.fundaciontextil.ui.vistas.perfiles
+
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.*
@@ -18,7 +19,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun PantallaEmprendedor() {
+fun PantallaEmprendedor(
+    onVolverClick: () -> Unit = {},
+    onMensajesClick: () -> Unit = {},
+    onSolicitudesClick: () -> Unit = {}
+) {
     val colorVerdeTeal = Color(0xFF1A8582)
     val colorAmarillo = Color(0xFFFFD15C)
     val fondoTarjeta = Color(0xFFF9F9F9)
@@ -37,7 +42,7 @@ fun PantallaEmprendedor() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { /* TODO: Navegar a pantalla principal */ }) {
+            IconButton(onClick = onVolverClick) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Volver",
@@ -53,7 +58,7 @@ fun PantallaEmprendedor() {
                 color = colorVerdeTeal
             )
 
-            IconButton(onClick = { /* TODO: Navegar a vista de mensajes */ }) {
+            IconButton(onClick = onMensajesClick) {
                 Icon(
                     imageVector = Icons.Default.Email,
                     contentDescription = "Mensajes",
@@ -148,7 +153,7 @@ fun PantallaEmprendedor() {
 
         // Botón de acción principal
         Button(
-            onClick = { /* TODO: Navegar a las solicitudes de donación */ },
+            onClick = onSolicitudesClick,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),

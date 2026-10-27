@@ -19,7 +19,11 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 
 @Composable
-fun PantallaUsuario() {
+fun PantallaUsuario(
+    onVolverClick: () -> Unit = {},
+    onMensajesClick: () -> Unit = {},
+    onDonacionesClick: () -> Unit = {}
+) {
     val colorVerdeTeal = Color(0xFF1A8582)
     val colorAmarillo = Color(0xFFFFD15C)
     val fondoTarjeta = Color(0xFFF9F9F9)
@@ -38,7 +42,7 @@ fun PantallaUsuario() {
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            IconButton(onClick = { /* TODO: Navegar a pantalla principal */ }) {
+            IconButton(onClick = onVolverClick) {
                 Icon(
                     imageVector = Icons.Default.ArrowBack,
                     contentDescription = "Volver",
@@ -54,7 +58,7 @@ fun PantallaUsuario() {
                 color = colorVerdeTeal
             )
 
-            IconButton(onClick = { /* TODO: Navegar a vista de mensajes */ }) {
+            IconButton(onClick = onMensajesClick) {
                 Icon(
                     imageVector = Icons.Default.Email,
                     contentDescription = "Mensajes",
@@ -149,7 +153,7 @@ fun PantallaUsuario() {
 
         // Botón de acción principal
         Button(
-            onClick = { /* TODO: Navegar al historial de donaciones */ },
+            onClick = onDonacionesClick,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(50.dp),
