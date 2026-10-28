@@ -85,24 +85,17 @@ class MainActivity : ComponentActivity() {
                             "bienvenida" -> {
                                 PantallaBienvenida(
                                     modifier = Modifier.padding(espacioInterior),
-                                    alExplorarCatalogo = {
-                                        pantallaActual = "catalogo"
-                                    },
-                                    alRegistrarme = {
-                                        pantallaActual = "registro"
-                                    },
-                                    alIniciarSesion = {
-                                        pantallaActual = "login"
-                                    }
+                                    alExplorarCatalogo = { pantallaActual = "catalogo" },
+                                    alRegistrarme = { pantallaActual = "registro" },
+                                    alIniciarSesion = { pantallaActual = "login" },
+                                    alVerPerfil = { pantallaActual = "perfilEmprendedor" }
                                 )
                             }
 
                             "login" -> {
                                 PantallaLogin(
                                     alVolver = { pantallaActual = "bienvenida" },
-                                    alLoginExitoso = {
-                                        pantallaActual = "catalogo"
-                                    }
+                                    alLoginExitoso = { pantallaActual = "catalogo" }
                                 )
                             }
 
@@ -110,9 +103,7 @@ class MainActivity : ComponentActivity() {
                                 PantallaCatalogo(
                                     modifier = Modifier.padding(espacioInterior),
                                     viewModel = catalogoViewModel,
-                                    alVolver = {
-                                        pantallaActual = "bienvenida"
-                                    },
+                                    alVolver = { pantallaActual = "bienvenida" },
                                     alSeleccionar = { emprendimiento ->
                                         emprendimientoSeleccionado = emprendimiento
                                         pantallaActual = "detalle"
@@ -126,22 +117,24 @@ class MainActivity : ComponentActivity() {
                                     PantallaDetalleEmprendimiento(
                                         emprendimiento = emprendimiento,
                                         galeriaViewModel = galeriaViewModel,
-                                        alVolver = {
-                                            pantallaActual = "catalogo"
-                                        },
-                                        alContactar = {
-                                            pantallaActual = "mensajeria"
-                                        }
+                                        alVolver = { pantallaActual = "catalogo" },
+                                        alContactar = { pantallaActual = "mensajeria" }
                                     )
                                 }
+                            }
+
+                            "perfilEmprendedor" -> {
+                                PantallaEmprendedor(
+                                    onVolverClick = { pantallaActual = "bienvenida" },
+                                    onMensajesClick = { pantallaActual = "mensajeria" },
+                                    onSolicitudesClick = { }
+                                )
                             }
 
                             "registro" -> {
                                 RegistroScreen(
                                     modifier = Modifier.padding(espacioInterior),
-                                    alVolver = {
-                                        pantallaActual = "bienvenida"
-                                    },
+                                    alVolver = { pantallaActual = "bienvenida" },
                                     alGuardarExitoso = { id ->
                                         catalogoViewModel.cargarEmprendimientos()
                                         idGuardado = id
@@ -154,9 +147,7 @@ class MainActivity : ComponentActivity() {
                                 PantallaConfirmacion(
                                     id = idGuardado,
                                     modifier = Modifier.padding(espacioInterior),
-                                    alVolverAlInicio = {
-                                        pantallaActual = "bienvenida"
-                                    }
+                                    alVolverAlInicio = { pantallaActual = "bienvenida" }
                                 )
                             }
 
@@ -165,7 +156,7 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.padding(espacioInterior),
                                     nombreEmprendimiento = emprendimientoSeleccionado?.nombre ?: "Taller Textil Circular",
                                     alVolver = {
-                                        pantallaActual = if (emprendimientoSeleccionado != null) "detalle" else "perfil_emprendedor"
+                                        pantallaActual = if (emprendimientoSeleccionado != null) "detalle" else "perfilEmprendedor"
                                     }
                                 )
                             }
