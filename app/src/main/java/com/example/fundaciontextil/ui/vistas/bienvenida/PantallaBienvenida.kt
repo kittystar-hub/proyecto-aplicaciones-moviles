@@ -1,5 +1,9 @@
 package com.example.fundaciontextil.ui.vistas.bienvenida
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -17,7 +21,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -29,16 +39,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
 import android.content.Intent
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.core.tween
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
-import androidx.core.net.toUri
+import android.net.Uri
 
 //Paleta de colores para el tema de la aplicación
 private val Turquesa = Color(0xFF168C8C)
@@ -50,7 +51,8 @@ private val Negro = Color(0xFF202020)
 fun PantallaBienvenida(
     modifier: Modifier = Modifier,
     alExplorarCatalogo: () -> Unit = {},
-    alRegistrarme: () -> Unit = {}
+    alRegistrarme: () -> Unit = {},
+    alIniciarSesion: () -> Unit = {} // <-- Conservado de tu rama
 ){
     val contexto = LocalContext.current
 
@@ -141,6 +143,7 @@ fun PantallaBienvenida(
                 }
 
                 Spacer(modifier = Modifier.height(12.dp))
+
                 //Ir a registro
                 Button(
                     onClick = alRegistrarme,
@@ -160,16 +163,24 @@ fun PantallaBienvenida(
                     )
                 }
 
+                //BOTÓN DE LOGIN
+                TextButton(
+                    onClick = alIniciarSesion,
+                    modifier = Modifier.padding(vertical = 4.dp)
+                ) {
+                    Text(
+                        text = "¿Ya tienes cuenta? Inicia sesión",
+                        color = Negro,
+                        fontWeight = FontWeight.Medium
+                    )
+                }
+
                 Spacer(modifier = Modifier.height(12.dp))
 
                 OutlinedButton(
                     onClick = {
-                        val direccion = "https://www.textilcircular.cl/".toUri()
-
-                        val intent = Intent(
-                            Intent.ACTION_VIEW,
-                            direccion
-                        )
+                        val direccion = Uri.parse("https://www.textilcircular.cl/")
+                        val intent = Intent(Intent.ACTION_VIEW, direccion)
                         contexto.startActivity(intent)
                     },
                     modifier = Modifier

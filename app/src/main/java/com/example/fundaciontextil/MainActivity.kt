@@ -4,6 +4,13 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
+import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Scaffold
@@ -11,23 +18,18 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.fundaciontextil.model.Emprendimiento
 import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
 import com.example.fundaciontextil.ui.vistas.bienvenida.PantallaBienvenida
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaCatalogo
-import com.example.fundaciontextil.viewmodel.CatalogoViewModel
-import com.example.fundaciontextil.ui.vistas.registro.RegistroScreen
-import com.example.fundaciontextil.ui.vistas.registro.PantallaConfirmacion
-import com.example.fundaciontextil.model.Emprendimiento
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaDetalleEmprendimiento
-import com.example.fundaciontextil.viewmodel.GaleriaViewModel
+import com.example.fundaciontextil.ui.vistas.login.PantallaLogin
 import com.example.fundaciontextil.ui.vistas.mensajeria.PantallaMensajeria
-import androidx.compose.animation.AnimatedContent
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.togetherWith
-import androidx.compose.animation.core.tween
+import com.example.fundaciontextil.ui.vistas.perfiles.PantallaEmprendedor
+import com.example.fundaciontextil.ui.vistas.registro.PantallaConfirmacion
+import com.example.fundaciontextil.ui.vistas.registro.RegistroScreen
+import com.example.fundaciontextil.viewmodel.CatalogoViewModel
+import com.example.fundaciontextil.viewmodel.GaleriaViewModel
 
 class MainActivity : ComponentActivity() {
 
@@ -39,10 +41,13 @@ class MainActivity : ComponentActivity() {
         setContent {
             FundacionTextilTheme {
                 val catalogoViewModel: CatalogoViewModel = viewModel()
-
                 val galeriaViewModel: GaleriaViewModel = viewModel()
 
                 var emprendimientoSeleccionado by remember {
+                    mutableStateOf<Emprendimiento?>(null)
+                }
+
+                var emprendimientoLogueado by remember {
                     mutableStateOf<Emprendimiento?>(null)
                 }
 
@@ -62,21 +67,13 @@ class MainActivity : ComponentActivity() {
                         targetState = pantallaActual,
                         transitionSpec = {
                             (
-                                    fadeIn(
-                                        animationSpec = tween(250)
-                                    ) +
-                                            slideInHorizontally(
-                                                animationSpec = tween(300)
-                                            ) { anchoCompleto ->
+                                    fadeIn(animationSpec = tween(250)) +
+                                            slideInHorizontally(animationSpec = tween(300)) { anchoCompleto ->
                                                 anchoCompleto / 12
                                             }
                                     ) togetherWith (
-                                    fadeOut(
-                                        animationSpec = tween(180)
-                                    ) +
-                                            slideOutHorizontally(
-                                                animationSpec = tween(250)
-                                            ) { anchoCompleto ->
+                                    fadeOut(animationSpec = tween(180)) +
+                                            slideOutHorizontally(animationSpec = tween(250)) { anchoCompleto ->
                                                 -anchoCompleto / 12
                                             }
                                     )
@@ -91,9 +88,20 @@ class MainActivity : ComponentActivity() {
                                     alExplorarCatalogo = {
                                         pantallaActual = "catalogo"
                                     },
-
                                     alRegistrarme = {
                                         pantallaActual = "registro"
+                                    },
+                                    alIniciarSesion = {
+                                        pantallaActual = "login"
+                                    }
+                                )
+                            }
+
+                            "login" -> {
+                                PantallaLogin(
+                                    alVolver = { pantallaActual = "bienvenida" },
+                                    alLoginExitoso = {
+                                        pantallaActual = "catalogo"
                                     }
                                 )
                             }
@@ -114,7 +122,6 @@ class MainActivity : ComponentActivity() {
 
                             "detalle" -> {
                                 val emprendimiento = emprendimientoSeleccionado
-
                                 if (emprendimiento != null) {
                                     PantallaDetalleEmprendimiento(
                                         emprendimiento = emprendimiento,
@@ -134,7 +141,7 @@ class MainActivity : ComponentActivity() {
                                     },
                                     alGuardarExitoso = { id ->
                                         catalogoViewModel.cargarEmprendimientos()
-                                        idGuardado = id //
+                                        idGuardado = id
                                         pantallaActual = "confirmacion"
                                     }
                                 )
@@ -153,11 +160,9 @@ class MainActivity : ComponentActivity() {
                             "mensajeria" -> {
                                 PantallaMensajeria(
                                     modifier = Modifier.padding(espacioInterior),
-                                    nombreEmprendimiento = emprendimientoSeleccionado?.nombre
-                                        ?: "Taller Textil Circular",
+                                    nombreEmprendimiento = emprendimientoSeleccionado?.nombre ?: "Taller Textil Circular",
                                     alVolver = {
-                                        pantallaActual =
-                                            if (emprendimientoSeleccionado != null) "detalle" else "catalogo"
+                                        pantallaActual = if (emprendimientoSeleccionado != null) "detalle" else "perfil_emprendedor"
                                     }
                                 )
                             }

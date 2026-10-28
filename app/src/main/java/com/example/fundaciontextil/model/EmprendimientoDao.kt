@@ -16,6 +16,6 @@ interface EmprendimientoDao {
     @Query("SELECT * FROM emprendimientos ORDER BY fechaRegistro DESC")
     suspend fun listarTodos(): List<Emprendimiento>
 
-    @Query("SELECT * FROM emprendimientos WHERE rut = :rut AND password = :contrasenia LIMIT 1")
+    @Query("SELECT * FROM emprendimientos WHERE rut = :rut AND contrasenia = :contrasenia LIMIT 1")
     suspend fun login(rut: String, contrasenia: String): Emprendimiento?
 }
