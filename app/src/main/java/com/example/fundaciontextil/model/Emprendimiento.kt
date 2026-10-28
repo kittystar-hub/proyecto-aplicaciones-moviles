@@ -23,5 +23,7 @@ data class Emprendimiento(
     val whatsapp: String = "",
     val email: String = "",
     val consentimiento: Boolean = false,
-    val fechaRegistro: Long = System.currentTimeMillis()
+    val fechaRegistro: Long = System.currentTimeMillis(),
+    val contrasenia: String = "",
+    val confirmarConstrasenia: String = ""
 )

@@ -11,9 +11,11 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import coil.compose.AsyncImage
+import coil.request.ImageRequest
 
 @Composable
 fun ImagenRegistro(
@@ -25,8 +27,13 @@ fun ImagenRegistro(
         .clip(CircleShape)
 
     if (!fotoUri.isNullOrBlank()) {
+        // optimizado: Forzamos a Coil a comprimir la imagen a 150px
         AsyncImage(
-            model = fotoUri,
+            model = ImageRequest.Builder(LocalContext.current)
+                .data(fotoUri)
+                .size(150)
+                .crossfade(true)
+                .build(),
             contentDescription = "Foto de perfil",
             contentScale = ContentScale.Crop,
             modifier = baseModifier
