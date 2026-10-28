@@ -7,4 +7,6 @@ class EmprendimientoRepository(private val dao: EmprendimientoDao) {
     suspend fun obtener(id: Long): Emprendimiento? = dao.obtenerPorId(id)
 
     suspend fun listar(): List<Emprendimiento> = dao.listarTodos()
+
+    suspend fun login(rut: String, contrasenia: String): Emprendimiento? = dao.login(rut, contrasenia)
 }

@@ -12,7 +12,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         Emprendimiento::class,
         FotoProducto::class
     ],
-    version = 2,
+    version = 3,
     exportSchema = false
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -21,7 +21,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun fotoProductoDao(): FotoProductoDao
 
     companion object {
-        private val MIGRATION_1_2 = object : Migration(1, 2) {
+        private val MIGRATION_1_2: Migration = object : Migration(1, 2) {
             override fun migrate(db: SupportSQLiteDatabase) {
                 db.execSQL(
                     """
@@ -47,6 +47,13 @@ abstract class AppDatabase : RoomDatabase() {
                 )
             }
         }
+
+        private val MIGRATION_2_3: Migration = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE emprendimientos ADD COLUMN contrasenia TEXT NOT NULL DEFAULT ''")
+            }
+        }
+
         @Volatile
         private var INSTANCE: AppDatabase? = null
 
@@ -57,9 +64,23 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "fundacion_textil.db"
                 )
-                    .addMigrations(MIGRATION_1_2)
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                     .build()
                     .also { INSTANCE = it }
             }
     }
-}
+        @Volatile
+        private var INSTANCE: AppDatabase? = null
+
+        fun get(context: Context): AppDatabase =
+            INSTANCE ?: synchronized(this) {
+                INSTANCE ?: Room.databaseBuilder(
+                    context.applicationContext,
+                    AppDatabase::class.java,
+                    "fundacion_textil.db"
+                )
+                    .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
+                    .build()
+                    .also { INSTANCE = it }
+            }
+    }

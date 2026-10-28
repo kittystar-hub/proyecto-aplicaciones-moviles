@@ -12,7 +12,6 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -21,9 +20,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.Checkbox
@@ -36,10 +36,12 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.Saver
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -47,6 +49,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -86,7 +89,12 @@ fun RegistroScreen(
         }
     }
 
-    val archivoFotoTemporal = remember { mutableStateOf<File?>(null) }
+    val archivoFotoTemporal = rememberSaveable(
+        saver = Saver<MutableState<File?>, String>(
+            save = { it.value?.absolutePath ?: "" },
+            restore = { mutableStateOf(if (it.isNotEmpty()) File(it) else null) }
+        )
+    ) { mutableStateOf<File?>(null) }
 
     fun crearUriParaCamara(): Uri? {
         val dir = File(context.filesDir, "fotos").apply { mkdirs() }
@@ -146,129 +154,121 @@ fun RegistroScreen(
             Spacer(Modifier.width(8.dp))
         }
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(horizontal = 20.dp, vertical = 8.dp),
+        // optimizacion:  Se cambio LazyColumn por Column + verticalScroll
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .verticalScroll(rememberScrollState())
+                .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            item { SeccionTitulo("Foto de perfil / taller") }
-            item {
-                Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
-                    Box(
-                        modifier = Modifier.size(160.dp).clip(CircleShape).background(Color(0xFFE6F4F4)).border(3.dp, Turquesa, CircleShape),
-                        contentAlignment = Alignment.Center
+            SeccionTitulo("Foto de perfil / taller")
+            Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Box(
+                    modifier = Modifier.size(160.dp).clip(CircleShape).background(Color(0xFFE6F4F4)).border(3.dp, Turquesa, CircleShape),
+                    contentAlignment = Alignment.Center
+                ) {
+                    ImagenRegistro(fotoUri = state.fotoUri, modifier = Modifier.size(150.dp))
+                }
+                Spacer(Modifier.height(12.dp))
+                Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                    OutlinedButton(onClick = { abrirCamara() }, shape = RoundedCornerShape(12.dp)) {
+                        Text("Cámara", color = Turquesa)
+                    }
+                    OutlinedButton(onClick = { galeriaLauncher.launch("image/*") }, shape = RoundedCornerShape(12.dp)) {
+                        Text("Galería", color = Turquesa)
+                    }
+                }
+            }
+
+            SeccionTitulo("Datos personales")
+            CampoTexto(valor = state.rut, onValorCambio = viewModel::actualizarRut, label = "RUT", placeholder = "Ej: 12345678-9", error = state.errores.rut)
+            CampoTexto(valor = state.nombre, onValorCambio = viewModel::actualizarNombre, label = "Nombre completo", placeholder = "Ej: María González", error = state.errores.nombre)
+            SelectorDesplegable(label = "Rango etario", valor = state.rangoEtario, opciones = ChileData.rangosEtarios, onSeleccionar = viewModel::actualizarRangoEtario, error = state.errores.rangoEtario)
+            SelectorDesplegable(label = "Género", valor = state.genero, opciones = ChileData.generos, onSeleccionar = viewModel::actualizarGenero, error = state.errores.genero)
+
+            SeccionTitulo("Datos del emprendimiento")
+            CampoTexto(valor = state.nombreTaller, onValorCambio = viewModel::actualizarNombreTaller, label = "Nombre del taller / emprendimiento", placeholder = "Ej: Taller Raíz", error = state.errores.nombreTaller)
+            OutlinedTextField(
+                value = state.descripcion,
+                onValueChange = viewModel::actualizarDescripcion,
+                label = { Text("¿Qué hace tu emprendimiento?") },
+                placeholder = { Text("Breve descripción (máx. 3 líneas)") },
+                minLines = 3, maxLines = 3,
+                isError = state.errores.descripcion != null,
+                supportingText = { Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(state.errores.descripcion ?: ""); Text("${state.descripcion.length}/300") } },
+                modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)
+            )
+            SelectorDesplegable(label = "Región", valor = state.region, opciones = ChileData.regiones, onSeleccionar = viewModel::actualizarRegion, error = state.errores.region)
+            SelectorDesplegable(label = "Comuna", valor = state.comuna, opciones = state.comunasDisponibles, onSeleccionar = viewModel::actualizarComuna, habilitado = state.region.isNotBlank(), error = state.errores.comuna)
+
+            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
+                Text("Rubros textiles (máx. 2)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Negro)
+                ChileData.rubrosTextiles.forEach { rubro ->
+                    val marcado = rubro in state.rubros
+                    Row(
+                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (marcado) Color(0xFFE6F4F4) else Color.Transparent).padding(horizontal = 4.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        ImagenRegistro(fotoUri = state.fotoUri, modifier = Modifier.size(150.dp))
-                    }
-                    Spacer(Modifier.height(12.dp))
-                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                        OutlinedButton(onClick = { abrirCamara() }, shape = RoundedCornerShape(12.dp)) {
-                            Text("Cámara", color = Turquesa)
-                        }
-                        OutlinedButton(onClick = { galeriaLauncher.launch("image/*") }, shape = RoundedCornerShape(12.dp)) {
-                            Text("Galería", color = Turquesa)
-                        }
+                        Checkbox(checked = marcado, onCheckedChange = { viewModel.alternarRubro(rubro) }, colors = CheckboxDefaults.colors(checkedColor = Turquesa))
+                        Text(rubro, style = MaterialTheme.typography.bodyMedium)
                     }
                 }
+                if (state.errores.rubros != null) Text(state.errores.rubros!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
             }
 
-            item { SeccionTitulo("Datos personales") }
-            item {
-                CampoTexto(valor = state.rut, onValorCambio = viewModel::actualizarRut, label = "RUT", placeholder = "Ej: 12345678-9", error = state.errores.rut)
-            }
-            item {
-                CampoTexto(valor = state.nombre, onValorCambio = viewModel::actualizarNombre, label = "Nombre completo", placeholder = "Ej: María González", error = state.errores.nombre)
-            }
-            item {
-                SelectorDesplegable(label = "Rango etario", valor = state.rangoEtario, opciones = ChileData.rangosEtarios, onSeleccionar = viewModel::actualizarRangoEtario, error = state.errores.rangoEtario)
-            }
-            item {
-                SelectorDesplegable(label = "Género", valor = state.genero, opciones = ChileData.generos, onSeleccionar = viewModel::actualizarGenero, error = state.errores.genero)
-            }
-
-            item { SeccionTitulo("Datos del emprendimiento") }
-            item {
-                CampoTexto(valor = state.nombreTaller, onValorCambio = viewModel::actualizarNombreTaller, label = "Nombre del taller / emprendimiento", placeholder = "Ej: Taller Raíz", error = state.errores.nombreTaller)
-            }
-            item {
-                OutlinedTextField(
-                    value = state.descripcion,
-                    onValueChange = viewModel::actualizarDescripcion,
-                    label = { Text("¿Qué hace tu emprendimiento?") },
-                    placeholder = { Text("Breve descripción (máx. 3 líneas)") },
-                    minLines = 3, maxLines = 3,
-                    isError = state.errores.descripcion != null,
-                    supportingText = { Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(state.errores.descripcion ?: ""); Text("${state.descripcion.length}/300") } },
-                    modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)
-                )
-            }
-            item {
-                SelectorDesplegable(label = "Región", valor = state.region, opciones = ChileData.regiones, onSeleccionar = viewModel::actualizarRegion, error = state.errores.region)
-            }
-            item {
-                SelectorDesplegable(label = "Comuna", valor = state.comuna, opciones = state.comunasDisponibles, onSeleccionar = viewModel::actualizarComuna, habilitado = state.region.isNotBlank(), error = state.errores.comuna)
-            }
-            item {
-                Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                    Text("Rubros textiles (máx. 2)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Negro)
-                    ChileData.rubrosTextiles.forEach { rubro ->
-                        val marcado = rubro in state.rubros
-                        Row(
-                            modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (marcado) Color(0xFFE6F4F4) else Color.Transparent).padding(horizontal = 4.dp),
-                            verticalAlignment = Alignment.CenterVertically
-                        ) {
-                            Checkbox(checked = marcado, onCheckedChange = { viewModel.alternarRubro(rubro) }, colors = CheckboxDefaults.colors(checkedColor = Turquesa))
-                            Text(rubro, style = MaterialTheme.typography.bodyMedium)
-                        }
-                    }
-                    if (state.errores.rubros != null) Text(state.errores.rubros!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+            SeccionTitulo("Canales de contacto")
+            CampoTexto(valor = state.whatsapp, onValorCambio = viewModel::actualizarWhatsapp, label = "WhatsApp", placeholder = "+56912345678", error = state.errores.whatsapp, keyboardType = KeyboardType.Phone)
+            CampoTexto(valor = state.email, onValorCambio = viewModel::actualizarEmail, label = "Correo electrónico", placeholder = "correo@dominio.cl", error = state.errores.email, keyboardType = KeyboardType.Email)
+            CampoTexto(
+                valor = state.contrasenia,
+                onValorCambio = viewModel::actualizarContrasenia,
+                label = "Contraseña",
+                placeholder = "Mínimo 6 caracteres",
+                error = state.errores.contrasenia,
+                visualTransformation = PasswordVisualTransformation()
+            )
+            CampoTexto(
+                valor = state.confirmarContrasenia,
+                onValorCambio = viewModel::actualizarConfirmarContrasenia,
+                label = "Confirmar contraseña",
+                placeholder = "Repite tu contraseña",
+                error = state.errores.confirmarContrasenia,
+                visualTransformation = PasswordVisualTransformation()
+            )
+            SeccionTitulo("Consentimiento legal")
+            Column {
+                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
+                    Checkbox(checked = state.consentimiento, onCheckedChange = viewModel::actualizarConsentimiento, colors = CheckboxDefaults.colors(checkedColor = Turquesa))
+                    Text("Autorizo el tratamiento de mis datos personales conforme a las Leyes N.º 21.719 y 19.628 de Chile.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 12.dp))
                 }
+                if (state.errores.consentimiento != null) Text(state.errores.consentimiento!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
             }
 
-            item { SeccionTitulo("Canales de contacto") }
-            item {
-                CampoTexto(valor = state.whatsapp, onValorCambio = viewModel::actualizarWhatsapp, label = "WhatsApp", placeholder = "+56912345678", error = state.errores.whatsapp, keyboardType = KeyboardType.Phone)
-            }
-            item {
-                CampoTexto(valor = state.email, onValorCambio = viewModel::actualizarEmail, label = "Correo electrónico", placeholder = "correo@dominio.cl", error = state.errores.email, keyboardType = KeyboardType.Email)
-            }
-
-            item { SeccionTitulo("Consentimiento legal") }
-            item {
-                Column {
-                    Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                        Checkbox(checked = state.consentimiento, onCheckedChange = viewModel::actualizarConsentimiento, colors = CheckboxDefaults.colors(checkedColor = Turquesa))
-                        Text("Autorizo el tratamiento de mis datos personales conforme a las Leyes N.º 21.719 y 19.628 de Chile.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 12.dp))
-                    }
-                    if (state.errores.consentimiento != null) Text(state.errores.consentimiento!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
+            Column {
+                if (state.errorGeneral != null) {
+                    Text(state.errorGeneral!!, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
+                    Spacer(Modifier.height(8.dp))
                 }
-            }
-
-            item {
-                Column {
-                    if (state.errorGeneral != null) {
-                        Text(state.errorGeneral!!, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
-                        Spacer(Modifier.height(8.dp))
+                Button(
+                    onClick = { viewModel.guardar() },
+                    enabled = !state.guardando,
+                    modifier = Modifier.fillMaxWidth().height(56.dp),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = ButtonDefaults.buttonColors(containerColor = Turquesa, contentColor = Color.White)
+                ) {
+                    if (state.guardando) {
+                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                        Spacer(Modifier.width(12.dp))
+                        Text("Guardando...")
+                    } else {
+                        Text("Guardar ficha", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                     }
-                    Button(
-                        onClick = { viewModel.guardar() },
-                        enabled = !state.guardando,
-                        modifier = Modifier.fillMaxWidth().height(56.dp),
-                        shape = RoundedCornerShape(16.dp),
-                        colors = ButtonDefaults.buttonColors(containerColor = Turquesa, contentColor = Color.White)
-                    ) {
-                        if (state.guardando) {
-                            CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
-                            Spacer(Modifier.width(12.dp))
-                            Text("Guardando...")
-                        } else {
-                            Text("Guardar ficha", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                        }
-                    }
-                    Spacer(Modifier.height(24.dp))
                 }
+                Spacer(Modifier.height(24.dp))
             }
         }
+
     }
 }
 
