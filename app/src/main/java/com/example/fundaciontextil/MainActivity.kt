@@ -120,6 +120,9 @@ class MainActivity : ComponentActivity() {
                                         galeriaViewModel = galeriaViewModel,
                                         alVolver = {
                                             pantallaActual = "catalogo"
+                                        },
+                                        alContactar = {
+                                            pantallaActual = "mensajeria"
                                         }
                                     )
                                 }
