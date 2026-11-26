@@ -24,6 +24,7 @@ import com.example.fundaciontextil.ui.vistas.bienvenida.PantallaBienvenida
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaCatalogo
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaDetalleEmprendimiento
 import com.example.fundaciontextil.ui.vistas.login.PantallaLogin
+import com.example.fundaciontextil.ui.vistas.mensajeria.PantallaBandejaEntrada
 import com.example.fundaciontextil.ui.vistas.mensajeria.PantallaMensajeria
 import com.example.fundaciontextil.ui.vistas.perfiles.PantallaEmprendedor
 import com.example.fundaciontextil.ui.vistas.registro.PantallaConfirmacion
@@ -47,8 +48,12 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf<Emprendimiento?>(null)
                 }
 
-                var emprendimientoLogueado by remember {
-                    mutableStateOf<Emprendimiento?>(null)
+                var nombreEmprendimientoChat by remember {
+                    mutableStateOf("Taller Textil Circular")
+                }
+
+                var origenMensajeria by remember {
+                    mutableStateOf("detalle")
                 }
 
                 var pantallaActual by rememberSaveable {
@@ -118,7 +123,11 @@ class MainActivity : ComponentActivity() {
                                         emprendimiento = emprendimiento,
                                         galeriaViewModel = galeriaViewModel,
                                         alVolver = { pantallaActual = "catalogo" },
-                                        alContactar = { pantallaActual = "mensajeria" }
+                                        alContactar = {
+                                            nombreEmprendimientoChat = emprendimiento.nombre
+                                            origenMensajeria = "detalle"
+                                            pantallaActual = "mensajeria"
+                                        }
                                     )
                                 }
                             }
@@ -126,8 +135,21 @@ class MainActivity : ComponentActivity() {
                             "perfilEmprendedor" -> {
                                 PantallaEmprendedor(
                                     onVolverClick = { pantallaActual = "bienvenida" },
-                                    onMensajesClick = { pantallaActual = "mensajeria" },
+                                    onMensajesClick = { pantallaActual = "bandeja_entrada" },
                                     onSolicitudesClick = { }
+                                )
+                            }
+
+                            "bandeja_entrada" -> {
+                                PantallaBandejaEntrada(
+                                    modifier = Modifier.padding(espacioInterior),
+                                    alVolver = { pantallaActual = "perfilEmprendedor" },
+                                    alSeleccionarConversacion = { nombre ->
+                                        nombreEmprendimientoChat = nombre
+                                        origenMensajeria = "bandeja_entrada"
+                                        pantallaActual = "mensajeria"
+                                    },
+                                    alExplorarCatalogo = { pantallaActual = "catalogo" }
                                 )
                             }
 
@@ -154,9 +176,15 @@ class MainActivity : ComponentActivity() {
                             "mensajeria" -> {
                                 PantallaMensajeria(
                                     modifier = Modifier.padding(espacioInterior),
-                                    nombreEmprendimiento = emprendimientoSeleccionado?.nombre ?: "Taller Textil Circular",
+                                    nombreEmprendimiento = nombreEmprendimientoChat,
                                     alVolver = {
-                                        pantallaActual = if (emprendimientoSeleccionado != null) "detalle" else "perfilEmprendedor"
+                                        pantallaActual = if (origenMensajeria == "bandeja_entrada") {
+                                            "bandeja_entrada"
+                                        } else if (emprendimientoSeleccionado != null) {
+                                            "detalle"
+                                        } else {
+                                            "catalogo"
+                                        }
                                     }
                                 )
                             }
