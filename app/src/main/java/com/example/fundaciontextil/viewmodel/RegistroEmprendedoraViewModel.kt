@@ -18,7 +18,7 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-class RegistroViewModel(application: Application) : AndroidViewModel(application) {
+class RegistroEmprendedoraViewModel(application: Application) : AndroidViewModel(application) {
 
     // lazy: la BD solo se abre al presionar "Guardar"(menos uso de recursos)
     private val repositorio by lazy {
@@ -161,7 +161,7 @@ class RegistroViewModel(application: Application) : AndroidViewModel(application
 
     companion object {
         fun factory(application: Application): ViewModelProvider.Factory = viewModelFactory {
-            initializer { RegistroViewModel(application) }
+            initializer { RegistroEmprendedoraViewModel(application) }
         }
     }
 }

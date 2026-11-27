@@ -1,7 +1,6 @@
 package com.example.fundaciontextil.ui.vistas.registro
 
 import android.Manifest
-import android.app.Application
 import android.content.Context
 import android.content.pm.PackageManager
 import android.net.Uri
@@ -26,12 +25,9 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
-import androidx.compose.material3.CheckboxDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -40,8 +36,8 @@ import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.Saver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -56,35 +52,30 @@ import androidx.compose.ui.unit.sp
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.fundaciontextil.model.ChileData
 import com.example.fundaciontextil.ui.components.CampoTexto
 import com.example.fundaciontextil.ui.components.ImagenRegistro
 import com.example.fundaciontextil.ui.components.SeccionTitulo
-import com.example.fundaciontextil.ui.components.SelectorDesplegable
-import com.example.fundaciontextil.viewmodel.RegistroViewModel
+import com.example.fundaciontextil.viewmodel.RegistroClienteViewModel
 import java.io.File
 
 private val Turquesa = Color(0xFF168C8C)
+private val Amarillo = Color(0xFFFFD84D)
 private val Fondo = Color(0xFFFFFEFA)
 private val Negro = Color(0xFF202020)
 
 @Composable
-fun RegistroScreen(
+fun PantallaRegistroCliente(
     modifier: Modifier = Modifier,
     alVolver: () -> Unit = {},
-    alGuardarExitoso: (Long) -> Unit = {},
-    viewModel: RegistroViewModel = viewModel(
-        factory = RegistroViewModel.factory(
-            LocalContext.current.applicationContext as Application
-        )
-    )
+    alRegistroExitoso: (Long) -> Unit = {},
+    viewModel: RegistroClienteViewModel = viewModel()
 ) {
-    val state by viewModel.uiState.collectAsState()
+    val estado by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    LaunchedEffect(state.guardadoExitoso, state.idGuardado) {
-        if (state.guardadoExitoso) {
-            state.idGuardado?.let { alGuardarExitoso(it) }
+    LaunchedEffect(estado.guardadoExitoso) {
+        estado.guardadoExitoso?.let { id ->
+            alRegistroExitoso(id)
             viewModel.consumirGuardado()
         }
     }
@@ -98,7 +89,7 @@ fun RegistroScreen(
 
     fun crearUriParaCamara(): Uri? {
         val dir = File(context.filesDir, "fotos").apply { mkdirs() }
-        val archivo = File(dir, "perfil_${System.currentTimeMillis()}.jpg")
+        val archivo = File(dir, "perfil_cliente_${System.currentTimeMillis()}.jpg")
         archivoFotoTemporal.value = archivo
         return FileProvider.getUriForFile(
             context,
@@ -136,7 +127,6 @@ fun RegistroScreen(
             camaraPermisoLauncher.launch(Manifest.permission.CAMERA)
         }
     }
-
     Column(modifier = modifier.fillMaxSize().background(Fondo)) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 8.dp),
@@ -144,7 +134,7 @@ fun RegistroScreen(
         ) {
             TextButton(onClick = alVolver) { Text("<- Volver", color = Turquesa) }
             Text(
-                text = "Crear mi ficha",
+                text = "Crear cuenta de cliente",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = Negro,
@@ -154,7 +144,6 @@ fun RegistroScreen(
             Spacer(Modifier.width(8.dp))
         }
 
-        // optimizacion:  Se cambio LazyColumn por Column + verticalScroll
         Column(
             modifier = Modifier
                 .fillMaxSize()
@@ -162,13 +151,13 @@ fun RegistroScreen(
                 .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            SeccionTitulo("Foto de perfil / taller")
+            SeccionTitulo("Foto de perfil")
             Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
                 Box(
                     modifier = Modifier.size(160.dp).clip(CircleShape).background(Color(0xFFE6F4F4)).border(3.dp, Turquesa, CircleShape),
                     contentAlignment = Alignment.Center
                 ) {
-                    ImagenRegistro(fotoUri = state.fotoUri, modifier = Modifier.size(150.dp))
+                    ImagenRegistro(fotoUri = estado.fotoUri, modifier = Modifier.size(150.dp))
                 }
                 Spacer(Modifier.height(12.dp))
                 Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -182,100 +171,83 @@ fun RegistroScreen(
             }
 
             SeccionTitulo("Datos personales")
-            CampoTexto(valor = state.rut, onValorCambio = viewModel::actualizarRut, label = "RUT", placeholder = "Ej: 12345678-9", error = state.errores.rut)
-            CampoTexto(valor = state.nombre, onValorCambio = viewModel::actualizarNombre, label = "Nombre completo", placeholder = "Ej: María González", error = state.errores.nombre)
-            SelectorDesplegable(label = "Rango etario", valor = state.rangoEtario, opciones = ChileData.rangosEtarios, onSeleccionar = viewModel::actualizarRangoEtario, error = state.errores.rangoEtario)
-            SelectorDesplegable(label = "Género", valor = state.genero, opciones = ChileData.generos, onSeleccionar = viewModel::actualizarGenero, error = state.errores.genero)
-
-            SeccionTitulo("Datos del emprendimiento")
-            CampoTexto(valor = state.nombreTaller, onValorCambio = viewModel::actualizarNombreTaller, label = "Nombre del taller / emprendimiento", placeholder = "Ej: Taller Raíz", error = state.errores.nombreTaller)
-            OutlinedTextField(
-                value = state.descripcion,
-                onValueChange = viewModel::actualizarDescripcion,
-                label = { Text("¿Qué hace tu emprendimiento?") },
-                placeholder = { Text("Breve descripción (máx. 3 líneas)") },
-                minLines = 3, maxLines = 3,
-                isError = state.errores.descripcion != null,
-                supportingText = { Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) { Text(state.errores.descripcion ?: ""); Text("${state.descripcion.length}/300") } },
-                modifier = Modifier.fillMaxWidth(), shape = RoundedCornerShape(12.dp)
-            )
-            SelectorDesplegable(label = "Región", valor = state.region, opciones = ChileData.regiones, onSeleccionar = viewModel::actualizarRegion, error = state.errores.region)
-            SelectorDesplegable(label = "Comuna", valor = state.comuna, opciones = state.comunasDisponibles, onSeleccionar = viewModel::actualizarComuna, habilitado = state.region.isNotBlank(), error = state.errores.comuna)
-
-            Column(verticalArrangement = Arrangement.spacedBy(6.dp)) {
-                Text("Rubros textiles (máx. 2)", style = MaterialTheme.typography.titleSmall, fontWeight = FontWeight.SemiBold, color = Negro)
-                ChileData.rubrosTextiles.forEach { rubro ->
-                    val marcado = rubro in state.rubros
-                    Row(
-                        modifier = Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).background(if (marcado) Color(0xFFE6F4F4) else Color.Transparent).padding(horizontal = 4.dp),
-                        verticalAlignment = Alignment.CenterVertically
-                    ) {
-                        Checkbox(checked = marcado, onCheckedChange = { viewModel.alternarRubro(rubro) }, colors = CheckboxDefaults.colors(checkedColor = Turquesa))
-                        Text(rubro, style = MaterialTheme.typography.bodyMedium)
-                    }
-                }
-                if (state.errores.rubros != null) Text(state.errores.rubros!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
-            }
-
-            SeccionTitulo("Canales de contacto")
-            CampoTexto(valor = state.whatsapp, onValorCambio = viewModel::actualizarWhatsapp, label = "WhatsApp", placeholder = "+56912345678", error = state.errores.whatsapp, keyboardType = KeyboardType.Phone)
-            CampoTexto(valor = state.email, onValorCambio = viewModel::actualizarEmail, label = "Correo electrónico", placeholder = "correo@dominio.cl", error = state.errores.email, keyboardType = KeyboardType.Email)
             CampoTexto(
-                valor = state.contrasenia,
+                valor = estado.nombre,
+                onValorCambio = viewModel::actualizarNombre,
+                label = "Nombre",
+                placeholder = "Tu nombre",
+                error = estado.nombreError
+            )
+            CampoTexto(
+                valor = estado.apellido,
+                onValorCambio = viewModel::actualizarApellido,
+                label = "Apellido",
+                placeholder = "Tu apellido",
+                error = estado.apellidoError
+            )
+            CampoTexto(
+                valor = estado.email,
+                onValorCambio = viewModel::actualizarEmail,
+                label = "Correo electrónico",
+                placeholder = "ejemplo@correo.com",
+                error = estado.emailError,
+                keyboardType = KeyboardType.Email
+            )
+            CampoTexto(
+                valor = estado.telefono,
+                onValorCambio = viewModel::actualizarTelefono,
+                label = "Teléfono (opcional)",
+                placeholder = "Ej: +56 9 1234 5678",
+                error = estado.telefonoError,
+                keyboardType = KeyboardType.Phone
+            )
+
+            SeccionTitulo("Seguridad")
+            CampoTexto(
+                valor = estado.contrasenia,
                 onValorCambio = viewModel::actualizarContrasenia,
                 label = "Contraseña",
                 placeholder = "Mínimo 6 caracteres",
-                error = state.errores.contrasenia,
+                error = estado.contraseniaError,
                 visualTransformation = PasswordVisualTransformation()
             )
             CampoTexto(
-                valor = state.confirmarContrasenia,
+                valor = estado.confirmarContrasenia,
                 onValorCambio = viewModel::actualizarConfirmarContrasenia,
                 label = "Confirmar contraseña",
                 placeholder = "Repite tu contraseña",
-                error = state.errores.confirmarContrasenia,
+                error = estado.confirmarContraseniaError,
                 visualTransformation = PasswordVisualTransformation()
             )
-            SeccionTitulo("Consentimiento legal")
-            Column {
-                Row(modifier = Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-                    Checkbox(checked = state.consentimiento, onCheckedChange = viewModel::actualizarConsentimiento, colors = CheckboxDefaults.colors(checkedColor = Turquesa))
-                    Text("Autorizo el tratamiento de mis datos personales conforme a las Leyes N.º 21.719 y 19.628 de Chile.", style = MaterialTheme.typography.bodySmall, modifier = Modifier.padding(top = 12.dp))
+
+            Spacer(Modifier.height(8.dp))
+
+            Button(
+                onClick = { viewModel.guardar() },
+                enabled = !estado.guardando,
+                modifier = Modifier.fillMaxWidth().height(56.dp),
+                shape = RoundedCornerShape(16.dp),
+                colors = ButtonDefaults.buttonColors(containerColor = Amarillo, contentColor = Negro)
+            ) {
+                if (estado.guardando) {
+                    CircularProgressIndicator(color = Negro, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
+                    Spacer(Modifier.width(12.dp))
+                    Text("Guardando...")
+                } else {
+                    Text("Crear mi cuenta", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
                 }
-                if (state.errores.consentimiento != null) Text(state.errores.consentimiento!!, color = MaterialTheme.colorScheme.error, fontSize = 12.sp)
             }
 
-            Column {
-                if (state.errorGeneral != null) {
-                    Text(state.errorGeneral!!, color = MaterialTheme.colorScheme.error, fontSize = 13.sp)
-                    Spacer(Modifier.height(8.dp))
-                }
-                Button(
-                    onClick = { viewModel.guardar() },
-                    enabled = !state.guardando,
-                    modifier = Modifier.fillMaxWidth().height(56.dp),
-                    shape = RoundedCornerShape(16.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Turquesa, contentColor = Color.White)
-                ) {
-                    if (state.guardando) {
-                        CircularProgressIndicator(color = Color.White, modifier = Modifier.size(22.dp), strokeWidth = 2.dp)
-                        Spacer(Modifier.width(12.dp))
-                        Text("Guardando...")
-                    } else {
-                        Text("Guardar ficha", fontWeight = FontWeight.SemiBold, fontSize = 16.sp)
-                    }
-                }
-                Spacer(Modifier.height(24.dp))
-            }
+            Spacer(Modifier.height(24.dp))
         }
-
     }
 }
 
+// Funcion para copiar el archivo de la galeria al almacenamiento interno
 private fun copiarUriAStorage(context: Context, origen: Uri): String? {
     return try {
         val dir = File(context.filesDir, "fotos").apply { mkdirs() }
-        val destino = File(dir, "perfil_${System.currentTimeMillis()}.jpg")
+        val destino = File(dir, "perfil_cliente_${System.currentTimeMillis()}.jpg")
         context.contentResolver.openInputStream(origen)?.use { input ->
             destino.outputStream().use { output -> input.copyTo(output) }
         }
