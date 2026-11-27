@@ -98,4 +98,5 @@ dependencies {
 
 // Ktor
     implementation(libs.ktor.client.android)
+    implementation("io.github.jan-tennert.supabase:auth-kt:3.0.1")
 }
