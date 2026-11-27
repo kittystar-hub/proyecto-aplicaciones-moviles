@@ -29,7 +29,9 @@ import com.example.fundaciontextil.ui.vistas.login.PantallaLoginCliente
 import com.example.fundaciontextil.ui.vistas.login.PantallaSeleccionLogin
 import com.example.fundaciontextil.ui.vistas.mensajeria.PantallaBandejaEntrada
 import com.example.fundaciontextil.ui.vistas.mensajeria.PantallaMensajeria
+import com.example.fundaciontextil.ui.vistas.perfiles.PantallaAdministrador
 import com.example.fundaciontextil.ui.vistas.perfiles.PantallaEmprendedor
+import com.example.fundaciontextil.ui.vistas.perfiles.PantallaUsuario
 import com.example.fundaciontextil.ui.vistas.registro.PantallaConfirmacion
 import com.example.fundaciontextil.ui.vistas.registro.PantallaRegistroCliente
 import com.example.fundaciontextil.ui.vistas.registro.PantallaSeleccionRegistro
@@ -65,6 +67,10 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf("bienvenida")
                 }
 
+                var rolActual by rememberSaveable {
+                    mutableStateOf("ninguno")
+                }
+
                 var idGuardado by rememberSaveable {
                     mutableStateOf<Long?>(null)
                 }
@@ -94,10 +100,12 @@ class MainActivity : ComponentActivity() {
                             "bienvenida" -> {
                                 PantallaBienvenida(
                                     modifier = Modifier.padding(espacioInterior),
-                                    alExplorarCatalogo = { pantallaActual = "catalogo" },
+                                    alExplorarCatalogo = {
+                                        rolActual = "ninguno"
+                                        pantallaActual = "catalogo"
+                                    },
                                     alRegistrarme = { pantallaActual = "seleccionRegistro" },
-                                    alIniciarSesion = { pantallaActual = "seleccionLogin" },
-                                    alVerPerfil = { pantallaActual = "perfilEmprendedor" }
+                                    alIniciarSesion = { pantallaActual = "seleccionLogin" }
                                 )
                             }
 
@@ -128,7 +136,6 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.padding(espacioInterior),
                                     alVolver = { pantallaActual = "seleccionRegistro" },
                                     alRegistroExitoso = {
-                                        // Al registrarse con exito, lo mandamos directo al login de cliente
                                         pantallaActual = "loginCliente"
                                     }
                                 )
@@ -156,7 +163,10 @@ class MainActivity : ComponentActivity() {
                             "login" -> {
                                 PantallaLogin(
                                     alVolver = { pantallaActual = "seleccionLogin" },
-                                    alLoginExitoso = { pantallaActual = "catalogo" }
+                                    alLoginExitoso = {
+                                        rolActual = "emprendedor"
+                                        pantallaActual = "catalogo"
+                                    }
                                 )
                             }
 
@@ -164,7 +174,10 @@ class MainActivity : ComponentActivity() {
                                 PantallaLoginCliente(
                                     modifier = Modifier.padding(espacioInterior),
                                     alVolver = { pantallaActual = "seleccionLogin" },
-                                    alLoginExitoso = { pantallaActual = "catalogo" }
+                                    alLoginExitoso = {
+                                        rolActual = "cliente"
+                                        pantallaActual = "catalogo"
+                                    }
                                 )
                             }
 
@@ -173,9 +186,8 @@ class MainActivity : ComponentActivity() {
                                     modifier = Modifier.padding(espacioInterior),
                                     alVolver = { pantallaActual = "seleccionLogin" },
                                     alLoginExitoso = {
-                                        // Al ingresar como admin, se puede redirigir a otra pantalla.
-                                        // Por ahora lo enviamos al catalogo.
-                                        pantallaActual = "catalogo"
+                                        rolActual = "admin"
+                                        pantallaActual = "perfilAdmin"
                                     }
                                 )
                             }
@@ -185,6 +197,14 @@ class MainActivity : ComponentActivity() {
                                 PantallaCatalogo(
                                     modifier = Modifier.padding(espacioInterior),
                                     viewModel = catalogoViewModel,
+                                    mostrarPerfil = rolActual == "emprendedor" || rolActual == "cliente",
+                                    alVerPerfil = {
+                                        pantallaActual = if (rolActual == "cliente") {
+                                            "perfilCliente"
+                                        } else {
+                                            "perfilEmprendedor"
+                                        }
+                                    },
                                     alVolver = { pantallaActual = "bienvenida" },
                                     alSeleccionar = { emprendimiento ->
                                         emprendimientoSeleccionado = emprendimiento
@@ -212,16 +232,37 @@ class MainActivity : ComponentActivity() {
                             // --- PERFILES Y MENSAJERÍA ---
                             "perfilEmprendedor" -> {
                                 PantallaEmprendedor(
-                                    onVolverClick = { pantallaActual = "bienvenida" },
+                                    onVolverClick = { pantallaActual = "catalogo" },
                                     onMensajesClick = { pantallaActual = "bandeja_entrada" },
                                     onSolicitudesClick = { }
+                                )
+                            }
+
+                            "perfilCliente" -> {
+                                PantallaUsuario(
+                                    onVolverClick = { pantallaActual = "catalogo" },
+                                    onMensajesClick = { pantallaActual = "bandeja_entrada" },
+                                    onDonacionesClick = { pantallaActual = "catalogo" }
+                                )
+                            }
+
+                            "perfilAdmin" -> {
+                                PantallaAdministrador(
+                                    modifier = Modifier.padding(espacioInterior),
+                                    onVolverClick = { pantallaActual = "bienvenida" }
                                 )
                             }
 
                             "bandeja_entrada" -> {
                                 PantallaBandejaEntrada(
                                     modifier = Modifier.padding(espacioInterior),
-                                    alVolver = { pantallaActual = "perfilEmprendedor" },
+                                    alVolver = {
+                                        pantallaActual = if (rolActual == "cliente") {
+                                            "perfilCliente"
+                                        } else {
+                                            "perfilEmprendedor"
+                                        }
+                                    },
                                     alSeleccionarConversacion = { nombre ->
                                         nombreEmprendimientoChat = nombre
                                         origenMensajeria = "bandeja_entrada"
