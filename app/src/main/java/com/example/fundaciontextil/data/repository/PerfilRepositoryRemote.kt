@@ -61,4 +61,9 @@ class PerfilRepositoryRemote {
                 }
             }
     }
+
+    // Obtener rol del usuario
+    suspend fun obtenerRolUsuario(id: String): String? {
+        return obtenerPerfilPorId(id)?.rol
+    }
 }
