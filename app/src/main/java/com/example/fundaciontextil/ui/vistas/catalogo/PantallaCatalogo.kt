@@ -1,40 +1,47 @@
 package com.example.fundaciontextil.ui.vistas.catalogo
 
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Person
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import androidx.compose.material3.TextButton
-import com.example.fundaciontextil.viewmodel.CatalogoViewModel
-import androidx.compose.foundation.layout.aspectRatio
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.ui.draw.clip
-import androidx.compose.material3.Button
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
-import androidx.compose.foundation.layout.Row
 import coil.compose.AsyncImage
 import com.example.fundaciontextil.model.Emprendimiento
+import com.example.fundaciontextil.viewmodel.CatalogoViewModel
 
 private val Turquesa = Color(0xFF168C8C)
 private val Negro = Color(0xFF202020)
@@ -43,25 +50,17 @@ private val Negro = Color(0xFF202020)
 fun PantallaCatalogo(
     modifier: Modifier = Modifier,
     viewModel: CatalogoViewModel,
+    mostrarPerfil: Boolean = false,
+    alVerPerfil: () -> Unit = {},
     alVolver: () -> Unit = {},
     alSeleccionar: (Emprendimiento) -> Unit = {}
 ) {
     val emprendimientos by viewModel.emprendimientos.collectAsState()
-    var regionSeleccionada by remember {
-        mutableStateOf("Todas")
-    }
+    var regionSeleccionada by remember { mutableStateOf("Todas") }
+    var menuRegionesExpandido by remember { mutableStateOf(false) }
 
-    var menuRegionesExpandido by remember {
-        mutableStateOf(false)
-    }
-
-    var comunaSeleccionada by remember {
-        mutableStateOf("Todas")
-    }
-
-    var menuComunasExpandido by remember {
-        mutableStateOf(false)
-    }
+    var comunaSeleccionada by remember { mutableStateOf("Todas") }
+    var menuComunasExpandido by remember { mutableStateOf(false) }
 
     val regiones = listOf("Todas") +
             emprendimientos
@@ -100,8 +99,6 @@ fun PantallaCatalogo(
                 .distinct()
                 .sorted()
 
-
-
     val emprendimientosFiltrados =
         emprendimientos.filter { emprendimiento ->
             val region = emprendimiento.region
@@ -136,15 +133,32 @@ fun PantallaCatalogo(
             .fillMaxSize()
             .padding(top = 24.dp)
     ) {
-        TextButton(
-            onClick = alVolver,
-            modifier = Modifier.padding(start = 8.dp)
+        // Barra superior: Volver a la izquierda y Perfil a la derecha (solo si inició sesión)
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 8.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(
-                text = "← Volver",
-                color = Turquesa
-            )
+            TextButton(onClick = alVolver) {
+                Text(
+                    text = "← Volver",
+                    color = Turquesa
+                )
+            }
+
+            if (mostrarPerfil) {
+                IconButton(onClick = alVerPerfil) {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Mi perfil",
+                        tint = Turquesa
+                    )
+                }
+            }
         }
+
         Text(
             text = "Catálogo textil",
             style = MaterialTheme.typography.headlineMedium,
@@ -162,12 +176,12 @@ fun PantallaCatalogo(
         )
 
         Spacer(modifier = Modifier.height(20.dp))
+
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp)
         ) {
-
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -175,9 +189,7 @@ fun PantallaCatalogo(
                 horizontalArrangement = Arrangement.spacedBy(12.dp)
             ) {
                 // Filtro de región
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Región",
                         style = MaterialTheme.typography.titleSmall
@@ -185,24 +197,17 @@ fun PantallaCatalogo(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    androidx.compose.foundation.layout.Box {
+                    Box {
                         Button(
-                            onClick = {
-                                menuRegionesExpandido = true
-                            },
+                            onClick = { menuRegionesExpandido = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = regionSeleccionada,
-                                maxLines = 1
-                            )
+                            Text(text = regionSeleccionada, maxLines = 1)
                         }
 
                         DropdownMenu(
                             expanded = menuRegionesExpandido,
-                            onDismissRequest = {
-                                menuRegionesExpandido = false
-                            }
+                            onDismissRequest = { menuRegionesExpandido = false }
                         ) {
                             regiones.forEach { region ->
                                 DropdownMenuItem(
@@ -219,9 +224,7 @@ fun PantallaCatalogo(
                 }
 
                 // Filtro de comuna
-                Column(
-                    modifier = Modifier.weight(1f)
-                ) {
+                Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Comuna",
                         style = MaterialTheme.typography.titleSmall
@@ -229,24 +232,17 @@ fun PantallaCatalogo(
 
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    androidx.compose.foundation.layout.Box {
+                    Box {
                         Button(
-                            onClick = {
-                                menuComunasExpandido = true
-                            },
+                            onClick = { menuComunasExpandido = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = comunaSeleccionada,
-                                maxLines = 1
-                            )
+                            Text(text = comunaSeleccionada, maxLines = 1)
                         }
 
                         DropdownMenu(
                             expanded = menuComunasExpandido,
-                            onDismissRequest = {
-                                menuComunasExpandido = false
-                            }
+                            onDismissRequest = { menuComunasExpandido = false }
                         ) {
                             comunas.forEach { comuna ->
                                 DropdownMenuItem(
@@ -261,22 +257,21 @@ fun PantallaCatalogo(
                     }
                 }
 
+                // Filtro de rubro
                 Column(modifier = Modifier.weight(1f)) {
                     Text(
                         text = "Rubro",
                         style = MaterialTheme.typography.titleSmall
                     )
+
                     Spacer(modifier = Modifier.height(4.dp))
 
-                    androidx.compose.foundation.layout.Box {
+                    Box {
                         Button(
                             onClick = { menuRubrosExpandido = true },
                             modifier = Modifier.fillMaxWidth()
                         ) {
-                            Text(
-                                text = rubroSeleccionado,
-                                maxLines = 1
-                            )
+                            Text(text = rubroSeleccionado, maxLines = 1)
                         }
 
                         DropdownMenu(
@@ -296,7 +291,6 @@ fun PantallaCatalogo(
                     }
                 }
             }
-
         }
 
         Spacer(modifier = Modifier.height(12.dp))
@@ -312,20 +306,12 @@ fun PantallaCatalogo(
         ) {
             items(emprendimientosFiltrados) { emprendimiento ->
                 Card(
-                    onClick = {
-                        alSeleccionar(emprendimiento)
-                    },
+                    onClick = { alSeleccionar(emprendimiento) },
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = Color(0xFFFFFEFA)
-                    ),
-                    elevation = CardDefaults.cardElevation(
-                        defaultElevation = 2.dp
-                    )
+                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFEFA)),
+                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
                 ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp)
-                    ) {
+                    Column(modifier = Modifier.padding(16.dp)) {
                         if (!emprendimiento.fotoUri.isNullOrBlank()) {
                             AsyncImage(
                                 model = emprendimiento.fotoUri,
@@ -334,7 +320,7 @@ fun PantallaCatalogo(
                                     .fillMaxWidth()
                                     .aspectRatio(16f / 9f)
                                     .clip(RoundedCornerShape(12.dp)),
-                                contentScale = androidx.compose.ui.layout.ContentScale.Crop
+                                contentScale = ContentScale.Crop
                             )
 
                             Spacer(modifier = Modifier.height(12.dp))
