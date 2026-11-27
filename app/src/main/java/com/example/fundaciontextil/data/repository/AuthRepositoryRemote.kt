@@ -3,6 +3,8 @@ package com.example.fundaciontextil.data.repository
 import com.example.fundaciontextil.data.remote.SupabaseClient
 import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class AuthRepositoryRemote {
 
@@ -11,11 +13,20 @@ class AuthRepositoryRemote {
     // Registrar usuario
     suspend fun registrarUsuario(
         email: String,
-        contrasena: String
+        contrasena: String,
+        rol: String
     ) {
+        require(rol == "cliente" || rol == "emprendedora") {
+            "El rol seleccionado no está permitido para el registro público."
+        }
+
         supabase.auth.signUpWith(Email) {
             this.email = email
             this.password = contrasena
+
+            data = buildJsonObject {
+                put("rol", rol)
+            }
         }
     }
 
