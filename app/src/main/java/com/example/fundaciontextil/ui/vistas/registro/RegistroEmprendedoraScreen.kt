@@ -144,7 +144,7 @@ fun RegistroScreen(
         ) {
             TextButton(onClick = alVolver) { Text("<- Volver", color = Turquesa) }
             Text(
-                text = "Crear mi ficha",
+                text = "Crear cuenta de emprendedora",
                 style = MaterialTheme.typography.titleLarge,
                 fontWeight = FontWeight.Bold,
                 color = Negro,
