@@ -61,7 +61,7 @@ import com.example.fundaciontextil.ui.components.CampoTexto
 import com.example.fundaciontextil.ui.components.ImagenRegistro
 import com.example.fundaciontextil.ui.components.SeccionTitulo
 import com.example.fundaciontextil.ui.components.SelectorDesplegable
-import com.example.fundaciontextil.viewmodel.RegistroViewModel
+import com.example.fundaciontextil.viewmodel.RegistroEmprendedoraViewModel
 import java.io.File
 
 private val Turquesa = Color(0xFF168C8C)
@@ -73,8 +73,8 @@ fun RegistroScreen(
     modifier: Modifier = Modifier,
     alVolver: () -> Unit = {},
     alGuardarExitoso: (Long) -> Unit = {},
-    viewModel: RegistroViewModel = viewModel(
-        factory = RegistroViewModel.factory(
+    viewModel: RegistroEmprendedoraViewModel = viewModel(
+        factory = RegistroEmprendedoraViewModel.factory(
             LocalContext.current.applicationContext as Application
         )
     )
