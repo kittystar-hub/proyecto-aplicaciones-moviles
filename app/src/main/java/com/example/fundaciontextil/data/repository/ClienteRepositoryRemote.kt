@@ -9,7 +9,7 @@ class ClienteRepositoryRemote {
 
     private val supabase = SupabaseClient.client
 
-    // Registrar un cliente
+    // Registrar cliente
     suspend fun registrarCliente(cliente: ClienteInsertRemote) {
         supabase
             .from("clientes")
@@ -22,5 +22,43 @@ class ClienteRepositoryRemote {
             .from("clientes")
             .select()
             .decodeList<ClienteRemote>()
+    }
+
+    // Obtener cliente por ID
+    suspend fun obtenerClientePorId(id: String): ClienteRemote? {
+        return supabase
+            .from("clientes")
+            .select {
+                filter {
+                    eq("id", id)
+                }
+            }
+            .decodeList<ClienteRemote>()
+            .firstOrNull()
+    }
+
+    // Actualizar cliente
+    suspend fun actualizarCliente(
+        id: String,
+        cliente: ClienteInsertRemote
+    ) {
+        supabase
+            .from("clientes")
+            .update(cliente) {
+                filter {
+                    eq("id", id)
+                }
+            }
+    }
+
+    // Eliminar cliente
+    suspend fun eliminarCliente(id: String) {
+        supabase
+            .from("clientes")
+            .delete {
+                filter {
+                    eq("id", id)
+                }
+            }
     }
 }
