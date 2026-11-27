@@ -168,7 +168,7 @@ fun PantallaBienvenida(
                         )
                     ) {
                         Text(
-                            text = "Crear mi ficha",
+                            text = "Crear cuenta",
                             fontSize = 17.sp,
                             fontWeight = FontWeight.SemiBold
                         )
