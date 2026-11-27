@@ -123,6 +123,7 @@ class MensajeriaViewModel : ViewModel() {
         }
     }
 
+
     private fun obtenerHoraActual(): String {
         val formato = SimpleDateFormat("HH:mm", Locale.getDefault())
         return formato.format(Date())
