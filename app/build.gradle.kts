@@ -1,3 +1,11 @@
+import java.util.Properties
+
+val localProperties = Properties().apply {
+    val archivo = rootProject.file("local.properties")
+    if (archivo.exists()) {
+        archivo.inputStream().use { load(it) }
+    }
+}
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -23,13 +31,13 @@ android {
         buildConfigField(
             "String",
             "SUPABASE_URL",
-            "\"${project.findProperty("SUPABASE_URL") ?: ""}\""
+            "\"${localProperties.getProperty("SUPABASE_URL", "")}\""
         )
 
         buildConfigField(
             "String",
             "SUPABASE_KEY",
-            "\"${project.findProperty("SUPABASE_KEY") ?: ""}\""
+            "\"${localProperties.getProperty("SUPABASE_KEY", "")}\""
         )
     }
 

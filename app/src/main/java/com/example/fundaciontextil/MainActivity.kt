@@ -36,6 +36,9 @@ import com.example.fundaciontextil.ui.vistas.registro.PantallaSeleccionRegistro
 import com.example.fundaciontextil.ui.vistas.registro.RegistroScreen
 import com.example.fundaciontextil.viewmodel.CatalogoViewModel
 import com.example.fundaciontextil.viewmodel.GaleriaViewModel
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import com.example.fundaciontextil.data.remote.SupabaseConnectionTest
 
 class MainActivity : ComponentActivity() {
 
@@ -43,6 +46,9 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
+        lifecycleScope.launch {
+            SupabaseConnectionTest.verificarConexion()
+        }
 
         setContent {
             FundacionTextilTheme {
