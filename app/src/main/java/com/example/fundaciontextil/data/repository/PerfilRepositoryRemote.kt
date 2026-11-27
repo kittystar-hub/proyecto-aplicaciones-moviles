@@ -4,6 +4,7 @@ import com.example.fundaciontextil.data.model.PerfilInsertRemote
 import com.example.fundaciontextil.data.model.PerfilRemote
 import com.example.fundaciontextil.data.remote.SupabaseClient
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.auth.auth
 
 class PerfilRepositoryRemote {
 
@@ -65,5 +66,13 @@ class PerfilRepositoryRemote {
     // Obtener rol del usuario
     suspend fun obtenerRolUsuario(id: String): String? {
         return obtenerPerfilPorId(id)?.rol
+    }
+
+    // Obtener perfil del usuario autenticado
+    suspend fun obtenerPerfilActual(): PerfilRemote? {
+        val usuarioId = SupabaseClient.client.auth.currentUserOrNull()?.id
+            ?: return null
+
+        return obtenerPerfilPorId(usuarioId)
     }
 }
