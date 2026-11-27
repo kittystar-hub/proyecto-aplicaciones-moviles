@@ -23,6 +23,11 @@ data class EmprendimientoRemote(
     @SerialName("foto_url")
     val fotoUrl: String? = null,
 
+    val estado: String = "pendiente",
+
+    @SerialName("motivo_rechazo")
+    val motivoRechazo: String? = null,
+
     @SerialName("fecha_registro")
     val fechaRegistro: String? = null
 )

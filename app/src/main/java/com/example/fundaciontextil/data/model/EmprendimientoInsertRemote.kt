@@ -16,5 +16,9 @@ data class EmprendimientoInsertRemote(
     val ubicacion: String? = null,
     val descripcion: String? = null,
     @SerialName("foto_url")
-    val fotoUrl: String? = null
+    val fotoUrl: String? = null,
+    val estado: String = "pendiente",
+
+    @SerialName("motivo_rechazo")
+    val motivoRechazo: String? = null
 )
