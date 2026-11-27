@@ -55,4 +55,9 @@ class AuthRepositoryRemote {
     fun haySesionActiva(): Boolean {
         return supabase.auth.currentSessionOrNull() != null
     }
+
+    // Obtener usuario autenticado
+    fun obtenerUsuarioActual(): String? {
+        return obtenerUsuarioId()
+    }
 }
