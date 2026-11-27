@@ -24,10 +24,15 @@ import com.example.fundaciontextil.ui.vistas.bienvenida.PantallaBienvenida
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaCatalogo
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaDetalleEmprendimiento
 import com.example.fundaciontextil.ui.vistas.login.PantallaLogin
+import com.example.fundaciontextil.ui.vistas.login.PantallaLoginAdmin
+import com.example.fundaciontextil.ui.vistas.login.PantallaLoginCliente
+import com.example.fundaciontextil.ui.vistas.login.PantallaSeleccionLogin
 import com.example.fundaciontextil.ui.vistas.mensajeria.PantallaBandejaEntrada
 import com.example.fundaciontextil.ui.vistas.mensajeria.PantallaMensajeria
 import com.example.fundaciontextil.ui.vistas.perfiles.PantallaEmprendedor
 import com.example.fundaciontextil.ui.vistas.registro.PantallaConfirmacion
+import com.example.fundaciontextil.ui.vistas.registro.PantallaRegistroCliente
+import com.example.fundaciontextil.ui.vistas.registro.PantallaSeleccionRegistro
 import com.example.fundaciontextil.ui.vistas.registro.RegistroScreen
 import com.example.fundaciontextil.viewmodel.CatalogoViewModel
 import com.example.fundaciontextil.viewmodel.GaleriaViewModel
@@ -71,39 +76,111 @@ class MainActivity : ComponentActivity() {
                     AnimatedContent(
                         targetState = pantallaActual,
                         transitionSpec = {
-                            (
-                                    fadeIn(animationSpec = tween(250)) +
-                                            slideInHorizontally(animationSpec = tween(300)) { anchoCompleto ->
-                                                anchoCompleto / 12
-                                            }
-                                    ) togetherWith (
+                            (fadeIn(animationSpec = tween(250)) +
+                                    slideInHorizontally(animationSpec = tween(300)) { anchoCompleto ->
+                                        anchoCompleto / 12
+                                    })
+                                .togetherWith(
                                     fadeOut(animationSpec = tween(180)) +
                                             slideOutHorizontally(animationSpec = tween(250)) { anchoCompleto ->
                                                 -anchoCompleto / 12
-                                            }
-                                    )
+                                            })
                         },
                         label = "Transición entre pantallas"
                     ) { pantalla ->
 
                         when (pantalla) {
+                            // --- INICIO ---
                             "bienvenida" -> {
                                 PantallaBienvenida(
                                     modifier = Modifier.padding(espacioInterior),
                                     alExplorarCatalogo = { pantallaActual = "catalogo" },
-                                    alRegistrarme = { pantallaActual = "registro" },
-                                    alIniciarSesion = { pantallaActual = "login" },
+                                    alRegistrarme = { pantallaActual = "seleccionRegistro" },
+                                    alIniciarSesion = { pantallaActual = "seleccionLogin" },
                                     alVerPerfil = { pantallaActual = "perfilEmprendedor" }
+                                )
+                            }
+
+                            // --- FLUJO DE REGISTRO ---
+                            "seleccionRegistro" -> {
+                                PantallaSeleccionRegistro(
+                                    modifier = Modifier.padding(espacioInterior),
+                                    alVolver = { pantallaActual = "bienvenida" },
+                                    alSeleccionarEmprendedora = { pantallaActual = "registro" },
+                                    alSeleccionarCliente = { pantallaActual = "registroCliente" }
+                                )
+                            }
+
+                            "registro" -> {
+                                RegistroScreen(
+                                    modifier = Modifier.padding(espacioInterior),
+                                    alVolver = { pantallaActual = "seleccionRegistro" },
+                                    alGuardarExitoso = { id ->
+                                        catalogoViewModel.cargarEmprendimientos()
+                                        idGuardado = id
+                                        pantallaActual = "confirmacion"
+                                    }
+                                )
+                            }
+
+                            "registroCliente" -> {
+                                PantallaRegistroCliente(
+                                    modifier = Modifier.padding(espacioInterior),
+                                    alVolver = { pantallaActual = "seleccionRegistro" },
+                                    alRegistroExitoso = {
+                                        // Al registrarse con exito, lo mandamos directo al login de cliente
+                                        pantallaActual = "loginCliente"
+                                    }
+                                )
+                            }
+
+                            "confirmacion" -> {
+                                PantallaConfirmacion(
+                                    id = idGuardado,
+                                    modifier = Modifier.padding(espacioInterior),
+                                    alVolverAlInicio = { pantallaActual = "bienvenida" }
+                                )
+                            }
+
+                            // --- FLUJO DE LOGIN ---
+                            "seleccionLogin" -> {
+                                PantallaSeleccionLogin(
+                                    modifier = Modifier.padding(espacioInterior),
+                                    alVolver = { pantallaActual = "bienvenida" },
+                                    alSeleccionarEmprendedora = { pantallaActual = "login" },
+                                    alSeleccionarCliente = { pantallaActual = "loginCliente" },
+                                    alSeleccionarAdmin = { pantallaActual = "loginAdmin" }
                                 )
                             }
 
                             "login" -> {
                                 PantallaLogin(
-                                    alVolver = { pantallaActual = "bienvenida" },
+                                    alVolver = { pantallaActual = "seleccionLogin" },
                                     alLoginExitoso = { pantallaActual = "catalogo" }
                                 )
                             }
 
+                            "loginCliente" -> {
+                                PantallaLoginCliente(
+                                    modifier = Modifier.padding(espacioInterior),
+                                    alVolver = { pantallaActual = "seleccionLogin" },
+                                    alLoginExitoso = { pantallaActual = "catalogo" }
+                                )
+                            }
+
+                            "loginAdmin" -> {
+                                PantallaLoginAdmin(
+                                    modifier = Modifier.padding(espacioInterior),
+                                    alVolver = { pantallaActual = "seleccionLogin" },
+                                    alLoginExitoso = {
+                                        // Al ingresar como admin, se puede redirigir a otra pantalla.
+                                        // Por ahora lo enviamos al catalogo.
+                                        pantallaActual = "catalogo"
+                                    }
+                                )
+                            }
+
+                            // --- CATÁLOGO Y DETALLE ---
                             "catalogo" -> {
                                 PantallaCatalogo(
                                     modifier = Modifier.padding(espacioInterior),
@@ -132,6 +209,7 @@ class MainActivity : ComponentActivity() {
                                 }
                             }
 
+                            // --- PERFILES Y MENSAJERÍA ---
                             "perfilEmprendedor" -> {
                                 PantallaEmprendedor(
                                     onVolverClick = { pantallaActual = "bienvenida" },
@@ -150,26 +228,6 @@ class MainActivity : ComponentActivity() {
                                         pantallaActual = "mensajeria"
                                     },
                                     alExplorarCatalogo = { pantallaActual = "catalogo" }
-                                )
-                            }
-
-                            "registro" -> {
-                                RegistroScreen(
-                                    modifier = Modifier.padding(espacioInterior),
-                                    alVolver = { pantallaActual = "bienvenida" },
-                                    alGuardarExitoso = { id ->
-                                        catalogoViewModel.cargarEmprendimientos()
-                                        idGuardado = id
-                                        pantallaActual = "confirmacion"
-                                    }
-                                )
-                            }
-
-                            "confirmacion" -> {
-                                PantallaConfirmacion(
-                                    id = idGuardado,
-                                    modifier = Modifier.padding(espacioInterior),
-                                    alVolverAlInicio = { pantallaActual = "bienvenida" }
                                 )
                             }
 
