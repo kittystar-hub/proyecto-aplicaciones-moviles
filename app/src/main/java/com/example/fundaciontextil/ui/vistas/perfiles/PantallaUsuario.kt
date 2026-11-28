@@ -21,6 +21,11 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.fundaciontextil.viewmodel.PerfilClienteViewModel
 
 private val Turquesa = Color(0xFF168C8C)
 private val Amarillo = Color(0xFFFFD84D)
@@ -34,7 +39,15 @@ fun PantallaUsuario(
     onMensajesClick: () -> Unit = {},
     onDonacionesClick: () -> Unit = {},
     onCerrarSesionClick: () -> Unit = {},
+    viewModel: PerfilClienteViewModel = viewModel()
 ) {
+    val cliente by viewModel.cliente.collectAsState()
+    val cargando by viewModel.cargando.collectAsState()
+    val error by viewModel.error.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.cargarPerfil()
+    }
     Surface(
         modifier = modifier.fillMaxSize(),
         color = Fondo
@@ -80,6 +93,27 @@ fun PantallaUsuario(
 
             Spacer(modifier = Modifier.height(20.dp))
 
+            if (cargando) {
+                CircularProgressIndicator(
+                    color = Turquesa
+                )
+
+                Spacer(modifier = Modifier.height(16.dp))
+            }
+
+            error?.let { mensaje ->
+                Text(
+                    text = mensaje,
+                    color = MaterialTheme.colorScheme.error
+                )
+
+                TextButton(
+                    onClick = { viewModel.cargarPerfil() }
+                ) {
+                    Text("Reintentar")
+                }
+            }
+
             // Foto de Perfil
             Box(
                 modifier = Modifier
@@ -100,7 +134,12 @@ fun PantallaUsuario(
 
             // Nombre principal
             Text(
-                text = "Lamine Yabien",
+                text = when {
+                    cargando -> "Cargando perfil..."
+                    cliente != null ->
+                        "${cliente?.nombre.orEmpty()} ${cliente?.apellido.orEmpty()}".trim()
+                    else -> "Perfil de usuario"
+                },
                 style = MaterialTheme.typography.headlineMedium,
                 fontWeight = FontWeight.Bold,
                 color = Negro
@@ -124,16 +163,19 @@ fun PantallaUsuario(
                     )
                     Spacer(modifier = Modifier.height(10.dp))
 
-                    DatoFilaUsuario(etiqueta = "Correo:", valor = "LamineYabien777@gmail.com")
+                    DatoFilaUsuario(
+                        etiqueta = "Correo:",
+                        valor = cliente?.email ?: "—"
+                    )
+
                     Spacer(modifier = Modifier.height(6.dp))
 
-                    DatoFilaUsuario(etiqueta = "RUT:", valor = "12.345.678-9")
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    DatoFilaUsuario(etiqueta = "Teléfono:", valor = "+56 9 3333 2387")
-                    Spacer(modifier = Modifier.height(6.dp))
-
-                    DatoFilaUsuario(etiqueta = "Dirección:", valor = "Calle Tutancamon 418, Providencia")
+                    DatoFilaUsuario(
+                        etiqueta = "Teléfono:",
+                        valor = cliente?.telefono
+                            ?.takeIf { it.isNotBlank() }
+                            ?: "No registrado"
+                    )
                 }
             }
 
