@@ -68,6 +68,26 @@ class ClienteRepositoryRemote {
             }
     }
 
+    // Actualizar fotografía del cliente autenticado
+    suspend fun actualizarFotoCliente(
+        ruta: String
+    ): ClienteRemote {
+        val usuarioId = supabase.auth.currentUserOrNull()?.id
+            ?: error("No hay una sesión activa")
+
+        return supabase
+            .from("clientes")
+            .update({
+                set("foto_url", ruta)
+            }) {
+                filter {
+                    eq("auth_user_id", usuarioId)
+                }
+                select()
+            }
+            .decodeSingle<ClienteRemote>()
+    }
+
     // Eliminar cliente
     suspend fun eliminarCliente(id: String) {
         supabase

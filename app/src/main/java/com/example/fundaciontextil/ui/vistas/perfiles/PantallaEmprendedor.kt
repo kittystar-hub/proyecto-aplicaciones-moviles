@@ -32,6 +32,17 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import com.example.fundaciontextil.model.ChileData
 import com.example.fundaciontextil.ui.components.CampoTexto
 import com.example.fundaciontextil.ui.components.SelectorDesplegable
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.remember
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.SubcomposeAsyncImage
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.CancellationException
 
 private val Turquesa = Color(0xFF168C8C)
 private val Amarillo = Color(0xFFFFD84D)
@@ -53,9 +64,122 @@ fun PantallaEmprendedor(
     val error by viewModel.error.collectAsState()
     val guardando by viewModel.guardando.collectAsState()
     val errorRegistro by viewModel.errorRegistro.collectAsState()
+    val fotoUrl by viewModel.fotoUrl.collectAsState()
+    val subiendoFoto by viewModel.subiendoFoto.collectAsState()
+    val errorFoto by viewModel.errorFoto.collectAsState()
+    val fotoEmprendimientoUrl by viewModel.fotoEmprendimientoUrl.collectAsState()
+    val subiendoFotoEmprendimiento by viewModel.subiendoFotoEmprendimiento.collectAsState()
+    val errorFotoEmprendimiento by viewModel.errorFotoEmprendimiento.collectAsState()
+
+    var seleccionandoFotoEmprendimiento by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    var errorSeleccionEmprendimiento by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    val context = LocalContext.current
+    val coroutineScope = rememberCoroutineScope()
+
+    var errorSeleccion by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var leyendoImagen by remember {
+        mutableStateOf(false)
+    }
+
+    val procesandoFoto =
+        (leyendoImagen && !seleccionandoFotoEmprendimiento) ||
+                subiendoFoto
+
+    val procesandoFotoEmprendimiento =
+        (leyendoImagen && seleccionandoFotoEmprendimiento) ||
+                subiendoFotoEmprendimiento
+
+    val ocupado =
+        guardando || procesandoFoto || procesandoFotoEmprendimiento
 
     var mostrarFormulario by rememberSaveable {
         mutableStateOf(false)
+    }
+
+
+    val selectorImagen = rememberLauncherForActivityResult(
+        contract = ActivityResultContracts.GetContent()
+    ) { uri ->
+        if (uri != null && !ocupado && !cargando) {
+            val esFotoEmprendimiento = seleccionandoFotoEmprendimiento
+
+            if (esFotoEmprendimiento) {
+                errorSeleccionEmprendimiento = null
+            } else {
+                errorSeleccion = null
+            }
+
+            leyendoImagen = true
+
+            coroutineScope.launch {
+                try {
+                    val extension = when (
+                        context.contentResolver.getType(uri)
+                    ) {
+                        "image/jpeg" -> "jpg"
+                        "image/png" -> "png"
+                        "image/webp" -> "webp"
+                        else -> error("Formato de imagen no permitido")
+                    }
+
+                    val imagen = withContext(Dispatchers.IO) {
+                        context.contentResolver
+                            .openInputStream(uri)?.use { entrada ->
+
+                                val salida = java.io.ByteArrayOutputStream()
+                                val buffer = ByteArray(8192)
+                                var total = 0
+
+                                while (true) {
+                                    val leidos = entrada.read(buffer)
+
+                                    if (leidos == -1) break
+
+                                    total += leidos
+
+                                    if (total > 5 * 1024 * 1024) {
+                                        error("La imagen no puede superar los 5 MB")
+                                    }
+
+                                    salida.write(buffer, 0, leidos)
+                                }
+
+                                salida.toByteArray()
+
+                            } ?: error("No se pudo leer la imagen")
+                    }
+
+                    if (esFotoEmprendimiento) {
+                        viewModel.subirFotoEmprendimiento(imagen, extension)
+                    } else {
+                        viewModel.subirFoto(imagen, extension)
+                    }
+
+                } catch (e: CancellationException) {
+                    throw e
+                } catch (e: Exception) {
+                    val mensaje =
+                        "No se pudo seleccionar la imagen. Verifica su formato y tamaño."
+
+                    if (esFotoEmprendimiento) {
+                        errorSeleccionEmprendimiento = mensaje
+                    } else {
+                        errorSeleccion = mensaje
+                    }
+                } finally {
+                    leyendoImagen = false
+                }
+            }
+        }
     }
 
     LaunchedEffect(Unit) {
@@ -89,7 +213,7 @@ fun PantallaEmprendedor(
             ) {
                 IconButton(
                     onClick = onVolverClick,
-                    enabled = !guardando
+                    enabled = !ocupado
                 ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
@@ -107,7 +231,7 @@ fun PantallaEmprendedor(
 
                 IconButton(
                     onClick = onMensajesClick,
-                    enabled = !guardando
+                    enabled = !ocupado
                 ) {
                     Icon(
                         imageVector = Icons.Default.Email,
@@ -138,6 +262,7 @@ fun PantallaEmprendedor(
                 }
             }
 
+
             // Foto de Perfil / Logo
             Box(
                 modifier = Modifier
@@ -146,13 +271,84 @@ fun PantallaEmprendedor(
                     .background(Amarillo),
                 contentAlignment = Alignment.Center
             ) {
-                Icon(
-                    imageVector = Icons.Default.Person,
-                    contentDescription = "Foto de perfil",
-                    modifier = Modifier.size(52.dp),
-                    tint = Negro
+                if (!fotoUrl.isNullOrBlank()) {
+                    SubcomposeAsyncImage(
+                        model = fotoUrl,
+                        contentDescription = "Foto de perfil",
+                        modifier = Modifier.fillMaxSize(),
+                        contentScale = ContentScale.Crop,
+                        loading = {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(28.dp),
+                                    color = Turquesa,
+                                    strokeWidth = 2.dp
+                                )
+                            }
+                        },
+                        error = {
+                            Box(
+                                modifier = Modifier.fillMaxSize(),
+                                contentAlignment = Alignment.Center
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Default.Person,
+                                    contentDescription = "Foto no disponible",
+                                    modifier = Modifier.size(52.dp),
+                                    tint = Negro
+                                )
+                            }
+                        }
+                    )
+                } else {
+                    Icon(
+                        imageVector = Icons.Default.Person,
+                        contentDescription = "Foto de perfil",
+                        modifier = Modifier.size(52.dp),
+                        tint = Negro
+                    )
+                }
+            }
+
+            TextButton(
+                onClick = {
+                    seleccionandoFotoEmprendimiento = false
+                    selectorImagen.launch("image/*")
+                },
+                enabled = !cargando &&
+                        !ocupado &&
+                        !mostrarFormulario &&
+                        emprendedora != null
+            ) {
+                Text(
+                    text = when {
+                        procesandoFoto -> "Procesando fotografía..."
+                        fotoUrl != null -> "Cambiar fotografía"
+                        else -> "Agregar fotografía"
+                    },
+                    color = Turquesa
                 )
             }
+
+            if (procesandoFoto) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Turquesa,
+                    strokeWidth = 2.dp
+                )
+            }
+
+            (errorSeleccion ?: errorFoto)?.let { mensaje ->
+                Text(
+                    text = mensaje,
+                    color = MaterialTheme.colorScheme.error,
+                    style = MaterialTheme.typography.bodySmall
+                )
+            }
+
 
             Spacer(modifier = Modifier.height(16.dp))
 
@@ -274,6 +470,7 @@ fun PantallaEmprendedor(
                                     viewModel.limpiarErrorRegistro()
                                     mostrarFormulario = true
                                 },
+                                enabled = !ocupado,
                                 modifier = Modifier.fillMaxWidth(),
                                 colors = ButtonDefaults.buttonColors(
                                     containerColor = Turquesa
@@ -305,6 +502,95 @@ fun PantallaEmprendedor(
                             fontWeight = FontWeight.Bold,
                             color = Turquesa
                         )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+// Fotografía principal del emprendimiento
+                        Box(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(180.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(Turquesa.copy(alpha = 0.08f)),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (!fotoEmprendimientoUrl.isNullOrBlank()) {
+                                SubcomposeAsyncImage(
+                                    model = fotoEmprendimientoUrl,
+                                    contentDescription = "Fotografía del emprendimiento",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop,
+                                    loading = {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator(
+                                                color = Turquesa
+                                            )
+                                        }
+                                    },
+                                    error = {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            Text(
+                                                text = "Fotografía no disponible",
+                                                color = Color.Gray
+                                            )
+                                        }
+                                    }
+                                )
+                            } else {
+                                Text(
+                                    text = "Sin fotografía del emprendimiento",
+                                    color = Color.Gray,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+                        }
+
+                        TextButton(
+                            onClick = {
+                                seleccionandoFotoEmprendimiento = true
+                                selectorImagen.launch("image/*")
+                            },
+                            enabled = !ocupado && !cargando,
+                            modifier = Modifier.align(Alignment.CenterHorizontally)
+                        ) {
+                            Text(
+                                text = when {
+                                    procesandoFotoEmprendimiento ->
+                                        "Procesando fotografía..."
+
+                                    !emprendimiento?.fotoUrl.isNullOrBlank() ->
+                                        "Cambiar fotografía del emprendimiento"
+
+                                    else ->
+                                        "Agregar fotografía del emprendimiento"
+                                },
+                                color = Turquesa
+                            )
+                        }
+
+                        if (procesandoFotoEmprendimiento) {
+                            CircularProgressIndicator(
+                                modifier = Modifier
+                                    .size(24.dp)
+                                    .align(Alignment.CenterHorizontally),
+                                color = Turquesa,
+                                strokeWidth = 2.dp
+                            )
+                        }
+
+                        (errorSeleccionEmprendimiento ?: errorFotoEmprendimiento)?.let { mensaje ->
+                            Text(
+                                text = mensaje,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+                        }
 
                         Spacer(modifier = Modifier.height(12.dp))
 
@@ -413,7 +699,7 @@ fun PantallaEmprendedor(
             // Botón de acción principal
             Button(
                 onClick = onSolicitudesClick,
-                enabled = !guardando,
+                enabled = !ocupado,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
@@ -430,7 +716,7 @@ fun PantallaEmprendedor(
 
             OutlinedButton(
                 onClick = onCerrarSesionClick,
-                enabled = !guardando,
+                enabled = !ocupado,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),

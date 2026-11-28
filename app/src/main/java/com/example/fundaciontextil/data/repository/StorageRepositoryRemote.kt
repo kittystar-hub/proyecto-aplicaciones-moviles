@@ -8,7 +8,7 @@ class StorageRepositoryRemote {
 
     private val supabase = SupabaseClient.client
 
-    private val bucket = "imagenes-fundacion"
+    private val bucket = "imagenes_fundacion"
 
     suspend fun subirImagen(
         ruta: String,

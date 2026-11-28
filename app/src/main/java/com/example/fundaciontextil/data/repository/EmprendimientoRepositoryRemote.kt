@@ -4,6 +4,9 @@ import com.example.fundaciontextil.data.model.EmprendimientoInsertRemote
 import com.example.fundaciontextil.data.model.EmprendimientoRemote
 import com.example.fundaciontextil.data.remote.SupabaseClient
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.postgrest.postgrest
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 class EmprendimientoRepositoryRemote {
 
@@ -98,6 +101,20 @@ class EmprendimientoRepositoryRemote {
                     eq("id", id)
                 }
             }
+    }
+
+    // Actualizar fotografía principal del emprendimiento
+    suspend fun actualizarFotoEmprendimiento(
+        id: String,
+        ruta: String
+    ): EmprendimientoRemote {
+        return supabase.postgrest.rpc(
+            function = "actualizar_foto_emprendimiento",
+            parameters = buildJsonObject {
+                put("p_id", id)
+                put("p_ruta", ruta)
+            }
+        ).decodeAs<EmprendimientoRemote>()
     }
 
     // Eliminar emprendimiento

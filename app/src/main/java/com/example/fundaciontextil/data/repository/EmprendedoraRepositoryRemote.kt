@@ -97,4 +97,19 @@ class EmprendedoraRepositoryRemote {
                 }
             }
     }
+    suspend fun actualizarFotoEmprendedora(
+        ruta: String
+    ): EmprendedoraRemote {
+        val usuarioId = supabase.auth.currentUserOrNull()?.id
+            ?: error("No hay una sesión activa")
+
+        return supabase.from("emprendedoras").update({
+            set("foto_url", ruta)
+        }) {
+            filter {
+                eq("auth_user_id", usuarioId)
+            }
+            select()
+        }.decodeSingle<EmprendedoraRemote>()
+    }
 }
