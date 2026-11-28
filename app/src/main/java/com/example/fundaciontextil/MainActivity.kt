@@ -288,7 +288,7 @@ class MainActivity : ComponentActivity() {
                             "perfilAdmin" -> {
                                 PantallaAdministrador(
                                     modifier = Modifier.padding(espacioInterior),
-                                    onVolverClick = { pantallaActual = "bienvenida" }
+                                    onVolverClick = cerrarSesion
                                 )
                             }
 
