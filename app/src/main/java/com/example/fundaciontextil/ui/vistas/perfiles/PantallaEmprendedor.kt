@@ -32,7 +32,8 @@ fun PantallaEmprendedor(
     modifier: Modifier = Modifier,
     onVolverClick: () -> Unit = {},
     onMensajesClick: () -> Unit = {},
-    onSolicitudesClick: () -> Unit = {}
+    onSolicitudesClick: () -> Unit = {},
+    onCerrarSesionClick: () -> Unit = {}
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -182,6 +183,20 @@ fun PantallaEmprendedor(
                     text = "Ver solicitudes de donación",
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold
+                )
+            }
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = onCerrarSesionClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(
+                    text = "Cerrar sesión",
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

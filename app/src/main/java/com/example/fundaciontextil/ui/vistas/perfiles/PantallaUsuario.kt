@@ -32,7 +32,8 @@ fun PantallaUsuario(
     modifier: Modifier = Modifier,
     onVolverClick: () -> Unit = {},
     onMensajesClick: () -> Unit = {},
-    onDonacionesClick: () -> Unit = {}
+    onDonacionesClick: () -> Unit = {},
+    onCerrarSesionClick: () -> Unit = {},
 ) {
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -182,6 +183,21 @@ fun PantallaUsuario(
                     text = "Ver mis donaciones",
                     color = Color.White,
                     fontWeight = FontWeight.SemiBold
+                )
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            OutlinedButton(
+                onClick = onCerrarSesionClick,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(50.dp),
+                shape = RoundedCornerShape(16.dp)
+            ) {
+                Text(
+                    text = "Cerrar sesión",
+                    fontWeight = FontWeight.Bold
                 )
             }
         }

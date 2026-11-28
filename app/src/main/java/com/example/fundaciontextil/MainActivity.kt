@@ -271,17 +271,29 @@ class MainActivity : ComponentActivity() {
                             // --- PERFILES Y MENSAJERÍA ---
                             "perfilEmprendedor" -> {
                                 PantallaEmprendedor(
-                                    onVolverClick = { pantallaActual = "catalogo" },
-                                    onMensajesClick = { pantallaActual = "bandeja_entrada" },
-                                    onSolicitudesClick = { }
+                                    onVolverClick = {
+                                        pantallaActual = "catalogo"
+                                    },
+                                    onMensajesClick = {
+                                        pantallaActual = "bandeja_entrada"
+                                    },
+                                    onSolicitudesClick = {},
+                                    onCerrarSesionClick = cerrarSesion
                                 )
                             }
 
                             "perfilCliente" -> {
                                 PantallaUsuario(
-                                    onVolverClick = { pantallaActual = "catalogo" },
-                                    onMensajesClick = { pantallaActual = "bandeja_entrada" },
-                                    onDonacionesClick = { pantallaActual = "catalogo" }
+                                    onVolverClick = {
+                                        pantallaActual = "catalogo"
+                                    },
+                                    onMensajesClick = {
+                                        pantallaActual = "bandeja_entrada"
+                                    },
+                                    onDonacionesClick = {
+                                        pantallaActual = "catalogo"
+                                    },
+                                    onCerrarSesionClick = cerrarSesion
                                 )
                             }
 
