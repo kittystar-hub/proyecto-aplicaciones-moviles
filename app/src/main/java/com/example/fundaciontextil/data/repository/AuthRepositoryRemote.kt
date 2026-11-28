@@ -5,10 +5,16 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.providers.builtin.Email
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
+import com.example.fundaciontextil.data.model.ClienteInsertRemote
+import com.example.fundaciontextil.data.repository.ClienteRepositoryRemote
+import com.example.fundaciontextil.data.model.EmprendedoraInsertRemote
+import com.example.fundaciontextil.data.repository.EmprendedoraRepositoryRemote
 
 class AuthRepositoryRemote {
 
     private val supabase = SupabaseClient.client
+    private val clienteRepository = ClienteRepositoryRemote()
+    private val emprendedoraRepository = EmprendedoraRepositoryRemote()
 
     // Registrar usuario
     suspend fun registrarUsuario(
@@ -59,5 +65,54 @@ class AuthRepositoryRemote {
     // Obtener usuario autenticado
     fun obtenerUsuarioActual(): String? {
         return obtenerUsuarioId()
+    }
+
+    // Registrar cliente completo
+    suspend fun registrarCliente(
+        email: String,
+        contrasena: String,
+        cliente: ClienteInsertRemote
+    ) {
+        registrarUsuario(
+            email = email,
+            contrasena = contrasena,
+            rol = "cliente"
+        )
+
+        val usuarioId = obtenerUsuarioId()
+            ?: throw Exception(
+                "Cuenta creada. Es necesario iniciar sesión para completar el registro."
+            )
+
+        clienteRepository.registrarCliente(
+            cliente.copy(
+                email = email,
+                authUserId = usuarioId
+            )
+        )
+    }
+    // Registrar emprendedora completa
+    suspend fun registrarEmprendedora(
+        email: String,
+        contrasena: String,
+        emprendedora: EmprendedoraInsertRemote
+    ) {
+        registrarUsuario(
+            email = email,
+            contrasena = contrasena,
+            rol = "emprendedora"
+        )
+
+        val usuarioId = obtenerUsuarioId()
+            ?: throw Exception(
+                "Cuenta creada. Es necesario iniciar sesión para completar el registro."
+            )
+
+        emprendedoraRepository.registrarEmprendedora(
+            emprendedora.copy(
+                email = email,
+                authUserId = usuarioId
+            )
+        )
     }
 }

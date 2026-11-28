@@ -11,5 +11,8 @@ data class ClienteInsertRemote(
     val telefono: String? = null,
 
     @SerialName("foto_url")
-    val fotoUrl: String? = null
+    val fotoUrl: String? = null,
+
+    @SerialName("auth_user_id")
+    val authUserId: String
 )

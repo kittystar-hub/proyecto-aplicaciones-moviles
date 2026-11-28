@@ -13,7 +13,12 @@ data class EmprendedoraInsertRemote(
     val genero: String? = null,
     val whatsapp: String? = null,
     val email: String,
+
     @SerialName("foto_url")
     val fotoUrl: String? = null,
-    val consentimiento: Boolean = false
+
+    val consentimiento: Boolean = false,
+
+    @SerialName("auth_user_id")
+    val authUserId: String
 )

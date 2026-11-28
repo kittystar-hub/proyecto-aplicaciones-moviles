@@ -20,5 +20,8 @@ data class EmprendimientoInsertRemote(
     val estado: String = "pendiente",
 
     @SerialName("motivo_rechazo")
-    val motivoRechazo: String? = null
+    val motivoRechazo: String? = null,
+
+    @SerialName("auth_user_id")
+    val authUserId: String
 )
