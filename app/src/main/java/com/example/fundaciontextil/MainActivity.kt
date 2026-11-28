@@ -41,6 +41,8 @@ import com.example.fundaciontextil.viewmodel.GaleriaViewModel
 import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import com.example.fundaciontextil.data.remote.SupabaseConnectionTest
+import com.example.fundaciontextil.data.repository.AuthRepositoryRemote
+import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -75,6 +77,42 @@ class MainActivity : ComponentActivity() {
 
                 var rolActual by rememberSaveable {
                     mutableStateOf("ninguno")
+                }
+
+                val authRepository = remember {
+                    AuthRepositoryRemote()
+                }
+
+                val coroutineScope = rememberCoroutineScope()
+
+                var cerrandoSesion by remember {
+                    mutableStateOf(false)
+                }
+
+                var errorSesion by remember {
+                    mutableStateOf<String?>(null)
+                }
+
+                val cerrarSesion: () -> Unit = {
+                    if (!cerrandoSesion) {
+                        cerrandoSesion = true
+                        errorSesion = null
+
+                        coroutineScope.launch {
+                            try {
+                                authRepository.cerrarSesion()
+
+                                rolActual = "ninguno"
+                                emprendimientoSeleccionado = null
+                                pantallaActual = "bienvenida"
+
+                            } catch (e: Exception) {
+                                errorSesion = "No se pudo cerrar la sesión"
+                            } finally {
+                                cerrandoSesion = false
+                            }
+                        }
+                    }
                 }
 
                 Scaffold(
