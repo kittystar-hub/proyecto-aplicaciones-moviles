@@ -9,6 +9,21 @@ class EmprendimientoRepositoryRemote {
 
     private val supabase = SupabaseClient.client
 
+    // Obtener emprendimiento asociado a una emprendedora
+    suspend fun obtenerPorEmprendedoraId(
+        emprendedoraId: String
+    ): EmprendimientoRemote? {
+        return supabase
+            .from("emprendimientos")
+            .select {
+                filter {
+                    eq("emprendedora_id", emprendedoraId)
+                }
+            }
+            .decodeList<EmprendimientoRemote>()
+            .firstOrNull()
+    }
+
     // Registrar emprendimiento
     suspend fun registrarEmprendimiento(
         emprendimiento: EmprendimientoInsertRemote

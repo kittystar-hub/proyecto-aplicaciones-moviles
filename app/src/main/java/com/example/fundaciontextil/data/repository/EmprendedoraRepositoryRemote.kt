@@ -4,10 +4,27 @@ import com.example.fundaciontextil.data.model.EmprendedoraInsertRemote
 import com.example.fundaciontextil.data.model.EmprendedoraRemote
 import com.example.fundaciontextil.data.remote.SupabaseClient
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.auth.auth
 
 class EmprendedoraRepositoryRemote {
 
     private val supabase = SupabaseClient.client
+
+    // Obtener la emprendedora autenticada
+    suspend fun obtenerEmprendedoraActual(): EmprendedoraRemote? {
+        val usuarioId = supabase.auth.currentUserOrNull()?.id
+            ?: return null
+
+        return supabase
+            .from("emprendedoras")
+            .select {
+                filter {
+                    eq("auth_user_id", usuarioId)
+                }
+            }
+            .decodeList<EmprendedoraRemote>()
+            .firstOrNull()
+    }
 
     // Registrar emprendedora
     suspend fun registrarEmprendedora(
