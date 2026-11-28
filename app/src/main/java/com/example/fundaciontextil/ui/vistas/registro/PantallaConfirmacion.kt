@@ -17,7 +17,11 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 
 @Composable
-fun PantallaConfirmacion(id: Long?, modifier: Modifier = Modifier, alVolverAlInicio: () -> Unit = {}) {
+
+fun PantallaConfirmacion(
+    modifier: Modifier = Modifier,
+    alVolverAlInicio: () -> Unit = {}
+) {
     Column(
         modifier = modifier.fillMaxSize().background(Color(0xFFFFFEFA)).padding(32.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -27,9 +31,15 @@ fun PantallaConfirmacion(id: Long?, modifier: Modifier = Modifier, alVolverAlIni
             Text("✓", fontSize = 48.sp, fontWeight = FontWeight.Bold, color = Color(0xFF202020))
         }
         Spacer(Modifier.height(24.dp))
-        Text("¡Ficha guardada!", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color(0xFF202020), textAlign = TextAlign.Center)
+        Text("¡Registro recibido!", fontSize = 26.sp, fontWeight = FontWeight.Bold, color = Color(0xFF202020), textAlign = TextAlign.Center)
         Spacer(Modifier.height(12.dp))
-        Text(if (id != null) "Tu emprendimiento ya es parte de la fundación (#$id)." else "Tu emprendimiento ya es parte de la fundacion.", fontSize = 16.sp, color = Color(0xFF202020).copy(alpha = 0.8f), textAlign = TextAlign.Center)
+        Text(
+            text = "Confirma tu correo electrónico para activar tu cuenta. " +
+                    "Tu emprendimiento quedará pendiente de aprobación por la fundación.",
+            fontSize = 16.sp,
+            color = Color(0xFF202020).copy(alpha = 0.8f),
+            textAlign = TextAlign.Center
+        )
         Spacer(Modifier.height(32.dp))
         Button(
             onClick = alVolverAlInicio,

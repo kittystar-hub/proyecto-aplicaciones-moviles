@@ -72,7 +72,7 @@ private val Negro = Color(0xFF202020)
 fun RegistroScreen(
     modifier: Modifier = Modifier,
     alVolver: () -> Unit = {},
-    alGuardarExitoso: (Long) -> Unit = {},
+    alGuardarExitoso: () -> Unit = {},
     viewModel: RegistroEmprendedoraViewModel = viewModel(
         factory = RegistroEmprendedoraViewModel.factory(
             LocalContext.current.applicationContext as Application
@@ -82,9 +82,9 @@ fun RegistroScreen(
     val state by viewModel.uiState.collectAsState()
     val context = LocalContext.current
 
-    LaunchedEffect(state.guardadoExitoso, state.idGuardado) {
+    LaunchedEffect(state.guardadoExitoso) {
         if (state.guardadoExitoso) {
-            state.idGuardado?.let { alGuardarExitoso(it) }
+            alGuardarExitoso()
             viewModel.consumirGuardado()
         }
     }

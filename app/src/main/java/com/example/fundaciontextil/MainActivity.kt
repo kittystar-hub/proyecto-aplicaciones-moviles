@@ -77,10 +77,6 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf("ninguno")
                 }
 
-                var idGuardado by rememberSaveable {
-                    mutableStateOf<Long?>(null)
-                }
-
                 Scaffold(
                     modifier = Modifier.fillMaxSize()
                 ) { espacioInterior ->
@@ -129,9 +125,7 @@ class MainActivity : ComponentActivity() {
                                 RegistroScreen(
                                     modifier = Modifier.padding(espacioInterior),
                                     alVolver = { pantallaActual = "seleccionRegistro" },
-                                    alGuardarExitoso = { id ->
-                                        catalogoViewModel.cargarEmprendimientos()
-                                        idGuardado = id
+                                    alGuardarExitoso = {
                                         pantallaActual = "confirmacion"
                                     }
                                 )
@@ -149,9 +143,10 @@ class MainActivity : ComponentActivity() {
 
                             "confirmacion" -> {
                                 PantallaConfirmacion(
-                                    id = idGuardado,
                                     modifier = Modifier.padding(espacioInterior),
-                                    alVolverAlInicio = { pantallaActual = "bienvenida" }
+                                    alVolverAlInicio = {
+                                        pantallaActual = "bienvenida"
+                                    }
                                 )
                             }
 

@@ -27,7 +27,6 @@ data class RegistroUiState(
     // Proceso
     val guardando: Boolean = false,
     val guardadoExitoso: Boolean = false,
-    val idGuardado: Long? = null,
     val errorGeneral: String? = null,
     // Lista de comunas (calculada en viewmodel)
     val comunasDisponibles: List<String> = emptyList()

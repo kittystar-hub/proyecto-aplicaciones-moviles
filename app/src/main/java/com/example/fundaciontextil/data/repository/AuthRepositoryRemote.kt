@@ -94,7 +94,13 @@ class AuthRepositoryRemote {
     suspend fun registrarEmprendedora(
         email: String,
         contrasena: String,
-        emprendedora: EmprendedoraInsertRemote
+        emprendedora: EmprendedoraInsertRemote,
+        nombreTaller: String,
+        categoria: String,
+        rubros: String,
+        region: String,
+        comuna: String,
+        descripcion: String
     ) {
         supabase.auth.signUpWith(Email) {
             this.email = email
@@ -119,9 +125,13 @@ class AuthRepositoryRemote {
                     put("whatsapp", it)
                 }
 
-                emprendedora.fotoUrl?.let {
-                    put("foto_url", it)
-                }
+                put("nombre_taller", nombreTaller)
+                put("categoria", categoria)
+                put("rubros", rubros)
+                put("region", region)
+                put("comuna", comuna)
+                put("ubicacion", comuna)
+                put("descripcion", descripcion)
             }
         }
     }
