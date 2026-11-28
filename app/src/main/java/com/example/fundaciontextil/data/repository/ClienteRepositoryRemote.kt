@@ -4,6 +4,7 @@ import com.example.fundaciontextil.data.model.ClienteInsertRemote
 import com.example.fundaciontextil.data.model.ClienteRemote
 import com.example.fundaciontextil.data.remote.SupabaseClient
 import io.github.jan.supabase.postgrest.from
+import io.github.jan.supabase.auth.auth
 
 class ClienteRepositoryRemote {
 
@@ -31,6 +32,22 @@ class ClienteRepositoryRemote {
             .select {
                 filter {
                     eq("id", id)
+                }
+            }
+            .decodeList<ClienteRemote>()
+            .firstOrNull()
+    }
+
+    // Obtener los datos del cliente autenticado
+    suspend fun obtenerClienteActual(): ClienteRemote? {
+        val usuarioId = supabase.auth.currentUserOrNull()?.id
+            ?: return null
+
+        return supabase
+            .from("clientes")
+            .select {
+                filter {
+                    eq("auth_user_id", usuarioId)
                 }
             }
             .decodeList<ClienteRemote>()
