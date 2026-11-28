@@ -39,10 +39,13 @@ class EmprendimientoRepositoryRemote {
     // Registrar emprendimiento
     suspend fun registrarEmprendimiento(
         emprendimiento: EmprendimientoInsertRemote
-    ) {
-        supabase
+    ): EmprendimientoRemote {
+        return supabase
             .from("emprendimientos")
-            .insert(emprendimiento)
+            .insert(emprendimiento) {
+                select()
+            }
+            .decodeSingle<EmprendimientoRemote>()
     }
 
     // Obtener todos los emprendimientos
