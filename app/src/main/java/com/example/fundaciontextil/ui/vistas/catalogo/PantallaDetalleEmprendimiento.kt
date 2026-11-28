@@ -25,6 +25,13 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.fundaciontextil.data.model.EmprendimientoRemote
 import com.example.fundaciontextil.viewmodel.GaleriaViewModel
+import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Box
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.SubcomposeAsyncImage
 
 private val Turquesa = Color(0xFF168C8C)
 
@@ -32,6 +39,7 @@ private val Turquesa = Color(0xFF168C8C)
 fun PantallaDetalleEmprendimiento(
     emprendimiento: EmprendimientoRemote,
     galeriaViewModel: GaleriaViewModel,
+    fotoUrl: String? = null,
     alVolver: () -> Unit,
     alContactar: () -> Unit = {}
 ) {
@@ -53,6 +61,54 @@ fun PantallaDetalleEmprendimiento(
         )
 
         Spacer(modifier = Modifier.height(8.dp))
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(240.dp)
+                .clip(RoundedCornerShape(14.dp))
+                .background(Turquesa.copy(alpha = 0.08f)),
+            contentAlignment = Alignment.Center
+        ) {
+            if (!fotoUrl.isNullOrBlank()) {
+                SubcomposeAsyncImage(
+                    model = fotoUrl,
+                    contentDescription =
+                        "Fotografía de ${emprendimiento.nombreTaller}",
+                    modifier = Modifier.fillMaxSize(),
+                    contentScale = ContentScale.Crop,
+                    loading = {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            CircularProgressIndicator(
+                                color = Turquesa
+                            )
+                        }
+                    },
+                    error = {
+                        Box(
+                            modifier = Modifier.fillMaxSize(),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            Text(
+                                text = "Fotografía no disponible",
+                                color = Color.Gray
+                            )
+                        }
+                    }
+                )
+            } else {
+                Text(
+                    text = "Sin fotografía del emprendimiento",
+                    color = Color.Gray,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+
+        Spacer(modifier = Modifier.height(16.dp))
 
         Text(
             text = "Descripción",

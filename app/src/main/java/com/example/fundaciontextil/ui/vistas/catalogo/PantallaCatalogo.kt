@@ -39,6 +39,11 @@ import com.example.fundaciontextil.data.model.EmprendimientoRemote
 import com.example.fundaciontextil.viewmodel.CatalogoViewModel
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
+import coil.compose.SubcomposeAsyncImage
 
 private val Turquesa = Color(0xFF168C8C)
 private val Negro = Color(0xFF202020)
@@ -55,6 +60,7 @@ fun PantallaCatalogo(
     val emprendimientos by viewModel.emprendimientos.collectAsState()
     val cargando by viewModel.cargando.collectAsState()
     val error by viewModel.error.collectAsState()
+    val fotosEmprendimientos by viewModel.fotosEmprendimientos.collectAsState()
 
     LaunchedEffect(Unit) {
         viewModel.cargarEmprendimientos()
@@ -374,6 +380,58 @@ fun PantallaCatalogo(
                             )
                         ) {
                             Column(modifier = Modifier.padding(16.dp)) {
+
+                                val fotoUrl = emprendimiento.id?.let {
+                                    fotosEmprendimientos[it]
+                                }
+
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .height(180.dp)
+                                        .clip(RoundedCornerShape(12.dp))
+                                        .background(Turquesa.copy(alpha = 0.08f)),
+                                    contentAlignment = Alignment.Center
+                                ) {
+                                    if (!fotoUrl.isNullOrBlank()) {
+                                        SubcomposeAsyncImage(
+                                            model = fotoUrl,
+                                            contentDescription =
+                                                "Fotografía de ${emprendimiento.nombreTaller}",
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentScale = ContentScale.Crop,
+                                            loading = {
+                                                Box(
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    CircularProgressIndicator(
+                                                        color = Turquesa
+                                                    )
+                                                }
+                                            },
+                                            error = {
+                                                Box(
+                                                    modifier = Modifier.fillMaxSize(),
+                                                    contentAlignment = Alignment.Center
+                                                ) {
+                                                    Text(
+                                                        text = "Fotografía no disponible",
+                                                        color = Color.Gray
+                                                    )
+                                                }
+                                            }
+                                        )
+                                    } else {
+                                        Text(
+                                            text = "Sin fotografía",
+                                            color = Color.Gray,
+                                            style = MaterialTheme.typography.bodyMedium
+                                        )
+                                    }
+                                }
+
+                                Spacer(modifier = Modifier.height(12.dp))
 
                                 Text(
                                     text = emprendimiento.nombreTaller,

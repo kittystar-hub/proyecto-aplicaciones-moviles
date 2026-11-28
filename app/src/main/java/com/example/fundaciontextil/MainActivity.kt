@@ -56,6 +56,9 @@ class MainActivity : ComponentActivity() {
         setContent {
             FundacionTextilTheme {
                 val catalogoViewModel: CatalogoViewModel = viewModel()
+                val fotosEmprendimientos by
+                catalogoViewModel.fotosEmprendimientos.collectAsState()
+
                 val galeriaViewModel: GaleriaViewModel = viewModel()
 
                 var emprendimientoSeleccionado by remember {
@@ -255,6 +258,9 @@ class MainActivity : ComponentActivity() {
                                 val emprendimiento = emprendimientoSeleccionado
                                 if (emprendimiento != null) {
                                     PantallaDetalleEmprendimiento(
+                                        fotoUrl = emprendimiento.id?.let {
+                                            fotosEmprendimientos[it]
+                                        },
                                         emprendimiento = emprendimiento,
                                         galeriaViewModel = galeriaViewModel,
                                         alVolver = { pantallaActual = "catalogo" },
