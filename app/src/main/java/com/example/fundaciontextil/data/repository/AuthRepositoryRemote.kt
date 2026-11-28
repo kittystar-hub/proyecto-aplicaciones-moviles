@@ -6,15 +6,12 @@ import io.github.jan.supabase.auth.providers.builtin.Email
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import com.example.fundaciontextil.data.model.ClienteInsertRemote
-import com.example.fundaciontextil.data.repository.ClienteRepositoryRemote
 import com.example.fundaciontextil.data.model.EmprendedoraInsertRemote
-import com.example.fundaciontextil.data.repository.EmprendedoraRepositoryRemote
+import kotlinx.serialization.json.JsonObject
 
 class AuthRepositoryRemote {
 
     private val supabase = SupabaseClient.client
-    private val clienteRepository = ClienteRepositoryRemote()
-    private val emprendedoraRepository = EmprendedoraRepositoryRemote()
 
     // Registrar usuario
     suspend fun registrarUsuario(
@@ -73,46 +70,59 @@ class AuthRepositoryRemote {
         contrasena: String,
         cliente: ClienteInsertRemote
     ) {
-        registrarUsuario(
-            email = email,
-            contrasena = contrasena,
-            rol = "cliente"
-        )
+        supabase.auth.signUpWith(Email) {
+            this.email = email
+            this.password = contrasena
 
-        val usuarioId = obtenerUsuarioId()
-            ?: throw Exception(
-                "Cuenta creada. Es necesario iniciar sesión para completar el registro."
-            )
+            data = buildJsonObject {
+                put("rol", "cliente")
+                put("nombre", cliente.nombre)
+                put("apellido", cliente.apellido)
 
-        clienteRepository.registrarCliente(
-            cliente.copy(
-                email = email,
-                authUserId = usuarioId
-            )
-        )
+                cliente.telefono?.let {
+                    put("telefono", it)
+                }
+
+                cliente.fotoUrl?.let {
+                    put("foto_url", it)
+                }
+            }
+        }
     }
+
     // Registrar emprendedora completa
     suspend fun registrarEmprendedora(
         email: String,
         contrasena: String,
         emprendedora: EmprendedoraInsertRemote
     ) {
-        registrarUsuario(
-            email = email,
-            contrasena = contrasena,
-            rol = "emprendedora"
-        )
+        supabase.auth.signUpWith(Email) {
+            this.email = email
+            this.password = contrasena
 
-        val usuarioId = obtenerUsuarioId()
-            ?: throw Exception(
-                "Cuenta creada. Es necesario iniciar sesión para completar el registro."
-            )
+            data = buildJsonObject {
+                put("rol", "emprendedora")
+                put("rut", emprendedora.rut)
+                put("nombre", emprendedora.nombre)
+                put("apellido", emprendedora.apellido)
+                put("consentimiento", emprendedora.consentimiento)
 
-        emprendedoraRepository.registrarEmprendedora(
-            emprendedora.copy(
-                email = email,
-                authUserId = usuarioId
-            )
-        )
+                emprendedora.rangoEtario?.let {
+                    put("rango_etario", it)
+                }
+
+                emprendedora.genero?.let {
+                    put("genero", it)
+                }
+
+                emprendedora.whatsapp?.let {
+                    put("whatsapp", it)
+                }
+
+                emprendedora.fotoUrl?.let {
+                    put("foto_url", it)
+                }
+            }
+        }
     }
 }
