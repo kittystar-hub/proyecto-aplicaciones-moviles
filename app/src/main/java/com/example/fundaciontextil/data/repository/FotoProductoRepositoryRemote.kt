@@ -10,10 +10,15 @@ class FotoProductoRepositoryRemote {
     private val supabase = SupabaseClient.client
 
     // Registrar fotografía
-    suspend fun registrarFoto(foto: FotoProductoInsertRemote) {
-        supabase
+    suspend fun registrarFoto(
+        foto: FotoProductoInsertRemote
+    ): FotoProductoRemote {
+        return supabase
             .from("fotos_productos")
-            .insert(foto)
+            .insert(foto) {
+                select()
+            }
+            .decodeSingle<FotoProductoRemote>()
     }
 
     // Obtener fotografías de un emprendimiento
@@ -67,6 +72,8 @@ class FotoProductoRepositoryRemote {
                 filter {
                     eq("id", id)
                 }
+                select()
             }
+            .decodeSingle<FotoProductoRemote>()
     }
 }
