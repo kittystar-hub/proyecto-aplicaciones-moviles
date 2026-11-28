@@ -87,7 +87,10 @@ fun PantallaEmprendedor(
                 horizontalArrangement = Arrangement.SpaceBetween,
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onVolverClick) {
+                IconButton(
+                    onClick = onVolverClick,
+                    enabled = !guardando
+                ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",
@@ -102,7 +105,10 @@ fun PantallaEmprendedor(
                     color = Turquesa
                 )
 
-                IconButton(onClick = onMensajesClick) {
+                IconButton(
+                    onClick = onMensajesClick,
+                    enabled = !guardando
+                ) {
                     Icon(
                         imageVector = Icons.Default.Email,
                         contentDescription = "Mensajes",
@@ -246,22 +252,35 @@ fun PantallaEmprendedor(
                             color = Turquesa
                         )
 
-                        Text(
-                            text = "Actualmente no tienes un emprendimiento registrado.",
-                            color = Negro
-                        )
 
-                        Button(
-                            onClick = {
-                                viewModel.limpiarErrorRegistro()
-                                mostrarFormulario = true
-                            },
-                            modifier = Modifier.fillMaxWidth(),
-                            colors = ButtonDefaults.buttonColors(
-                                containerColor = Turquesa
+                        if (mostrarFormulario) {
+                            FormularioNuevoEmprendimiento(
+                                guardando = guardando,
+                                errorRegistro = errorRegistro,
+                                onCancelar = {
+                                    viewModel.limpiarErrorRegistro()
+                                    mostrarFormulario = false
+                                },
+                                onGuardar = viewModel::registrarEmprendimiento
                             )
-                        ) {
-                            Text("Registrar emprendimiento")
+                        } else {
+                            Text(
+                                text = "Actualmente no tienes un emprendimiento registrado.",
+                                color = Negro
+                            )
+
+                            Button(
+                                onClick = {
+                                    viewModel.limpiarErrorRegistro()
+                                    mostrarFormulario = true
+                                },
+                                modifier = Modifier.fillMaxWidth(),
+                                colors = ButtonDefaults.buttonColors(
+                                    containerColor = Turquesa
+                                )
+                            ) {
+                                Text("Registrar emprendimiento")
+                            }
                         }
                     }
                 }
@@ -394,6 +413,7 @@ fun PantallaEmprendedor(
             // Botón de acción principal
             Button(
                 onClick = onSolicitudesClick,
+                enabled = !guardando,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(52.dp),
@@ -410,6 +430,7 @@ fun PantallaEmprendedor(
 
             OutlinedButton(
                 onClick = onCerrarSesionClick,
+                enabled = !guardando,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(50.dp),
@@ -420,6 +441,211 @@ fun PantallaEmprendedor(
                     fontWeight = FontWeight.Bold
                 )
             }
+        }
+    }
+}
+
+
+@Composable
+private fun FormularioNuevoEmprendimiento(
+    guardando: Boolean,
+    errorRegistro: String?,
+    onCancelar: () -> Unit,
+    onGuardar: (
+        String, String, String,
+        String, String, String
+    ) -> Unit
+) {
+    var nombreTaller by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var descripcion by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var region by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var comuna by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var rubros by rememberSaveable {
+        mutableStateOf(arrayListOf<String>())
+    }
+
+    val formularioValido =
+        nombreTaller.isNotBlank() &&
+                descripcion.isNotBlank() &&
+                region.isNotBlank() &&
+                comuna.isNotBlank() &&
+                rubros.isNotEmpty()
+
+    Column(
+        modifier = Modifier.fillMaxWidth(),
+        verticalArrangement = Arrangement.spacedBy(12.dp)
+    ) {
+        Text(
+            text = "Registrar nuevo emprendimiento",
+            style = MaterialTheme.typography.titleMedium,
+            fontWeight = FontWeight.Bold,
+            color = Turquesa
+        )
+
+        Text(
+            text = "Completa los datos de tu nueva ficha. " +
+                    "Será revisada por un administrador.",
+            style = MaterialTheme.typography.bodyMedium,
+            color = Negro
+        )
+
+        CampoTexto(
+            valor = nombreTaller,
+            onValorCambio = { nombreTaller = it },
+            label = "Nombre del taller / emprendimiento",
+            placeholder = "Ej: Taller Raíz",
+            error = null
+        )
+
+        OutlinedTextField(
+            value = descripcion,
+            onValueChange = {
+                if (it.length <= 300) {
+                    descripcion = it
+                }
+            },
+            label = {
+                Text("¿Qué hace tu emprendimiento?")
+            },
+            placeholder = {
+                Text("Breve descripción")
+            },
+            minLines = 3,
+            maxLines = 3,
+            supportingText = {
+                Text("${descripcion.length}/300")
+            },
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(12.dp)
+        )
+
+        SelectorDesplegable(
+            label = "Región",
+            valor = region,
+            opciones = ChileData.regiones,
+            onSeleccionar = {
+                if (region != it) {
+                    region = it
+                    comuna = ""
+                }
+            },
+            error = null
+        )
+
+        SelectorDesplegable(
+            label = "Comuna",
+            valor = comuna,
+            opciones = ChileData.comunasDe(region),
+            onSeleccionar = { comuna = it },
+            habilitado = region.isNotBlank(),
+            error = null
+        )
+
+        Text(
+            text = "Rubros textiles (máx. 2)",
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            color = Negro
+        )
+
+        ChileData.rubrosTextiles.forEach { rubro ->
+
+            val marcado = rubro in rubros
+
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .clip(RoundedCornerShape(10.dp))
+                    .background(
+                        if (marcado) Color(0xFFE6F4F4)
+                        else Color.Transparent
+                    ),
+                verticalAlignment = Alignment.CenterVertically
+            ) {
+                Checkbox(
+                    checked = marcado,
+                    enabled = !guardando &&
+                            (marcado || rubros.size < 2),
+                    onCheckedChange = { seleccionado ->
+                        rubros = if (seleccionado) {
+                            ArrayList(rubros + rubro)
+                        } else {
+                            ArrayList(rubros - rubro)
+                        }
+                    },
+                    colors = CheckboxDefaults.colors(
+                        checkedColor = Turquesa
+                    )
+                )
+
+                Text(
+                    text = rubro,
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+        }
+
+        errorRegistro?.let {
+            Text(
+                text = it,
+                color = MaterialTheme.colorScheme.error
+            )
+        }
+
+        Button(
+            onClick = {
+                onGuardar(
+                    nombreTaller,
+                    rubros.first(),
+                    rubros.joinToString(", "),
+                    region,
+                    comuna,
+                    descripcion
+                )
+            },
+            enabled = formularioValido && !guardando,
+            modifier = Modifier
+                .fillMaxWidth()
+                .height(52.dp),
+            shape = RoundedCornerShape(16.dp),
+            colors = ButtonDefaults.buttonColors(
+                containerColor = Turquesa
+            )
+        ) {
+            if (guardando) {
+                CircularProgressIndicator(
+                    color = Color.White,
+                    modifier = Modifier.size(22.dp),
+                    strokeWidth = 2.dp
+                )
+
+                Spacer(modifier = Modifier.width(12.dp))
+
+                Text("Guardando...")
+            } else {
+                Text("Guardar ficha")
+            }
+        }
+
+        OutlinedButton(
+            onClick = onCancelar,
+            enabled = !guardando,
+            modifier = Modifier.fillMaxWidth(),
+            shape = RoundedCornerShape(16.dp)
+        ) {
+            Text("Cancelar")
         }
     }
 }
