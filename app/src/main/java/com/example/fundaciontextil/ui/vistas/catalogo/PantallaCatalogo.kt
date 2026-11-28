@@ -6,14 +6,12 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material3.Button
@@ -34,14 +32,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import coil.compose.AsyncImage
-import com.example.fundaciontextil.model.Emprendimiento
+import com.example.fundaciontextil.data.model.EmprendimientoRemote
 import com.example.fundaciontextil.viewmodel.CatalogoViewModel
+import androidx.compose.material3.CircularProgressIndicator
+import androidx.compose.runtime.LaunchedEffect
 
 private val Turquesa = Color(0xFF168C8C)
 private val Negro = Color(0xFF202020)
@@ -53,18 +50,29 @@ fun PantallaCatalogo(
     mostrarPerfil: Boolean = false,
     alVerPerfil: () -> Unit = {},
     alVolver: () -> Unit = {},
-    alSeleccionar: (Emprendimiento) -> Unit = {}
+    alSeleccionar: (EmprendimientoRemote) -> Unit = {}
 ) {
     val emprendimientos by viewModel.emprendimientos.collectAsState()
+    val cargando by viewModel.cargando.collectAsState()
+    val error by viewModel.error.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.cargarEmprendimientos()
+    }
     var regionSeleccionada by remember { mutableStateOf("Todas") }
     var menuRegionesExpandido by remember { mutableStateOf(false) }
 
     var comunaSeleccionada by remember { mutableStateOf("Todas") }
     var menuComunasExpandido by remember { mutableStateOf(false) }
 
+
     val regiones = listOf("Todas") +
             emprendimientos
-                .map { it.region.ifBlank { it.ubicacion }.trim() }
+                .map {
+                    it.region.orEmpty()
+                        .ifBlank { it.ubicacion.orEmpty() }
+                        .trim()
+                }
                 .filter { it.isNotBlank() }
                 .distinct()
                 .sorted()
@@ -73,11 +81,12 @@ fun PantallaCatalogo(
             emprendimientos
                 .filter {
                     regionSeleccionada == "Todas" ||
-                            it.region.ifBlank { it.ubicacion }
+                            it.region.orEmpty()
+                                .ifBlank { it.ubicacion.orEmpty() }
                                 .trim()
                                 .equals(regionSeleccionada, ignoreCase = true)
                 }
-                .map { it.comuna.trim() }
+                .map { it.comuna.orEmpty().trim() }
                 .filter { it.isNotBlank() }
                 .distinct()
                 .sorted()
@@ -88,10 +97,8 @@ fun PantallaCatalogo(
     val rubros = listOf("Todos") +
             emprendimientos
                 .flatMap { emprendimiento ->
-                    val rubrosTexto = emprendimiento.rubros
-                        .ifBlank { emprendimiento.categoria }
-
-                    rubrosTexto
+                    emprendimiento.rubros.orEmpty()
+                        .ifBlank { emprendimiento.categoria.orEmpty() }
                         .split(",")
                         .map { it.trim() }
                         .filter { it.isNotBlank() }
@@ -101,8 +108,9 @@ fun PantallaCatalogo(
 
     val emprendimientosFiltrados =
         emprendimientos.filter { emprendimiento ->
-            val region = emprendimiento.region
-                .ifBlank { emprendimiento.ubicacion }
+
+            val region = emprendimiento.region.orEmpty()
+                .ifBlank { emprendimiento.ubicacion.orEmpty() }
                 .trim()
 
             val coincideRegion =
@@ -111,11 +119,11 @@ fun PantallaCatalogo(
 
             val coincideComuna =
                 comunaSeleccionada == "Todas" ||
-                        emprendimiento.comuna.trim()
+                        emprendimiento.comuna.orEmpty().trim()
                             .equals(comunaSeleccionada, ignoreCase = true)
 
-            val rubrosEmprendimiento = emprendimiento.rubros
-                .ifBlank { emprendimiento.categoria }
+            val rubrosEmprendimiento = emprendimiento.rubros.orEmpty()
+                .ifBlank { emprendimiento.categoria.orEmpty() }
                 .split(",")
                 .map { it.trim() }
 
@@ -295,62 +303,108 @@ fun PantallaCatalogo(
 
         Spacer(modifier = Modifier.height(12.dp))
 
-        LazyColumn(
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(
-                start = 16.dp,
-                end = 16.dp,
-                bottom = 24.dp
-            ),
-            verticalArrangement = Arrangement.spacedBy(12.dp)
-        ) {
-            items(emprendimientosFiltrados) { emprendimiento ->
-                Card(
-                    onClick = { alSeleccionar(emprendimiento) },
-                    modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(containerColor = Color(0xFFFFFEFA)),
-                    elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
+
+        when {
+            cargando -> {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
                 ) {
-                    Column(modifier = Modifier.padding(16.dp)) {
-                        if (!emprendimiento.fotoUri.isNullOrBlank()) {
-                            AsyncImage(
-                                model = emprendimiento.fotoUri,
-                                contentDescription = "Fotografía de ${emprendimiento.nombre}",
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .aspectRatio(16f / 9f)
-                                    .clip(RoundedCornerShape(12.dp)),
-                                contentScale = ContentScale.Crop
+                    CircularProgressIndicator(color = Turquesa)
+                }
+            }
+
+            error != null -> {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(24.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally
+                ) {
+                    Text(
+                        text = error.orEmpty(),
+                        color = MaterialTheme.colorScheme.error
+                    )
+
+                    TextButton(
+                        onClick = { viewModel.cargarEmprendimientos() }
+                    ) {
+                        Text("Reintentar")
+                    }
+                }
+            }
+
+            emprendimientosFiltrados.isEmpty() -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(24.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Text(
+                        text = if (emprendimientos.isEmpty()) {
+                            "No hay emprendimientos aprobados disponibles."
+                        } else {
+                            "No se encontraron emprendimientos con los filtros seleccionados."
+                        },
+                        style = MaterialTheme.typography.bodyMedium
+                    )
+                }
+            }
+
+            else -> {
+                LazyColumn(
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(
+                        start = 16.dp,
+                        end = 16.dp,
+                        bottom = 24.dp
+                    ),
+                    verticalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(emprendimientosFiltrados) { emprendimiento ->
+                        Card(
+                            onClick = { alSeleccionar(emprendimiento) },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = CardDefaults.cardColors(
+                                containerColor = Color(0xFFFFFEFA)
+                            ),
+                            elevation = CardDefaults.cardElevation(
+                                defaultElevation = 2.dp
                             )
+                        ) {
+                            Column(modifier = Modifier.padding(16.dp)) {
 
-                            Spacer(modifier = Modifier.height(12.dp))
+                                Text(
+                                    text = emprendimiento.nombreTaller,
+                                    style = MaterialTheme.typography.titleMedium,
+                                    fontWeight = FontWeight.Bold,
+                                    color = Turquesa
+                                )
+
+                                Spacer(modifier = Modifier.height(6.dp))
+
+                                Text(
+                                    text = emprendimiento.categoria.orEmpty(),
+                                    style = MaterialTheme.typography.labelMedium
+                                )
+
+                                Text(
+                                    text = emprendimiento.ubicacion.orEmpty()
+                                        .ifBlank {
+                                            emprendimiento.comuna.orEmpty()
+                                        },
+                                    style = MaterialTheme.typography.bodySmall
+                                )
+
+                                Spacer(modifier = Modifier.height(8.dp))
+
+                                Text(
+                                    text = emprendimiento.descripcion.orEmpty(),
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
                         }
-
-                        Text(
-                            text = emprendimiento.nombre,
-                            style = MaterialTheme.typography.titleMedium,
-                            fontWeight = FontWeight.Bold,
-                            color = Turquesa
-                        )
-
-                        Spacer(modifier = Modifier.height(6.dp))
-
-                        Text(
-                            text = emprendimiento.categoria,
-                            style = MaterialTheme.typography.labelMedium
-                        )
-
-                        Text(
-                            text = emprendimiento.ubicacion,
-                            style = MaterialTheme.typography.bodySmall
-                        )
-
-                        Spacer(modifier = Modifier.height(8.dp))
-
-                        Text(
-                            text = emprendimiento.descripcion,
-                            style = MaterialTheme.typography.bodyMedium
-                        )
                     }
                 }
             }

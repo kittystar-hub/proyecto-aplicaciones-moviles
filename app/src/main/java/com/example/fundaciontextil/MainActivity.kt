@@ -18,7 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.fundaciontextil.model.Emprendimiento
+import com.example.fundaciontextil.data.model.EmprendimientoRemote
 import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
 import com.example.fundaciontextil.ui.vistas.bienvenida.PantallaBienvenida
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaCatalogo
@@ -42,7 +42,6 @@ import androidx.lifecycle.lifecycleScope
 import kotlinx.coroutines.launch
 import com.example.fundaciontextil.data.remote.SupabaseConnectionTest
 import com.example.fundaciontextil.data.repository.AuthRepositoryRemote
-import kotlinx.coroutines.launch
 
 class MainActivity : ComponentActivity() {
 
@@ -60,7 +59,7 @@ class MainActivity : ComponentActivity() {
                 val galeriaViewModel: GaleriaViewModel = viewModel()
 
                 var emprendimientoSeleccionado by remember {
-                    mutableStateOf<Emprendimiento?>(null)
+                    mutableStateOf<EmprendimientoRemote?>(null)
                 }
 
                 var nombreEmprendimientoChat by remember {
@@ -260,7 +259,7 @@ class MainActivity : ComponentActivity() {
                                         galeriaViewModel = galeriaViewModel,
                                         alVolver = { pantallaActual = "catalogo" },
                                         alContactar = {
-                                            nombreEmprendimientoChat = emprendimiento.nombre
+                                            nombreEmprendimientoChat = emprendimiento.nombreTaller
                                             origenMensajeria = "detalle"
                                             pantallaActual = "mensajeria"
                                         }
