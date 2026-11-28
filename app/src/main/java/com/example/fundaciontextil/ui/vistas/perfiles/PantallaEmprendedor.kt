@@ -26,6 +26,12 @@ import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.example.fundaciontextil.viewmodel.PerfilEmprendedoraViewModel
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.saveable.rememberSaveable
+import com.example.fundaciontextil.model.ChileData
+import com.example.fundaciontextil.ui.components.CampoTexto
+import com.example.fundaciontextil.ui.components.SelectorDesplegable
 
 private val Turquesa = Color(0xFF168C8C)
 private val Amarillo = Color(0xFFFFD84D)
@@ -45,10 +51,23 @@ fun PantallaEmprendedor(
     val emprendimiento by viewModel.emprendimiento.collectAsState()
     val cargando by viewModel.cargando.collectAsState()
     val error by viewModel.error.collectAsState()
+    val guardando by viewModel.guardando.collectAsState()
+    val errorRegistro by viewModel.errorRegistro.collectAsState()
+
+    var mostrarFormulario by rememberSaveable {
+        mutableStateOf(false)
+    }
 
     LaunchedEffect(Unit) {
         viewModel.cargarPerfil()
     }
+
+    LaunchedEffect(emprendimiento) {
+        if (emprendimiento != null) {
+            mostrarFormulario = false
+        }
+    }
+
     Surface(
         modifier = modifier.fillMaxSize(),
         color = Fondo
@@ -202,124 +221,170 @@ fun PantallaEmprendedor(
             Spacer(modifier = Modifier.height(20.dp))
 
 
-// Tarjeta de Información del Emprendimiento
-            Card(
-                modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(
-                    containerColor = Color.White
-                ),
-                border = BorderStroke(1.dp, Turquesa)
+            // Tarjeta de Información del Emprendimiento
+            if (!cargando && error == null &&
+                emprendedora != null && emprendimiento == null
             ) {
-                Column(
-                    modifier = Modifier
-                        .padding(16.dp)
-                        .fillMaxWidth()
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    border = BorderStroke(1.dp, Turquesa)
                 ) {
-                    Text(
-                        text = "Mi emprendimiento",
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        color = Turquesa
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    DatoFilaEmp(
-                        etiqueta = "Taller:",
-                        valor = emprendimiento?.nombreTaller ?: "—"
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    DatoFilaEmp(
-                        etiqueta = "Categoría:",
-                        valor = emprendimiento?.categoria ?: "—"
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    DatoFilaEmp(
-                        etiqueta = "Rubros:",
-                        valor = emprendimiento?.rubros ?: "—"
-                    )
-
-                    Spacer(modifier = Modifier.height(12.dp))
-
-                    Text(
-                        text = "Descripción",
-                        fontWeight = FontWeight.Bold,
-                        color = Negro
-                    )
-
-                    Spacer(modifier = Modifier.height(4.dp))
-
-                    Text(
-                        text = emprendimiento?.descripcion
-                            ?: "Sin descripción",
-                        style = MaterialTheme.typography.bodyMedium,
-                        color = Negro
-                    )
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    HorizontalDivider()
-
-                    Spacer(modifier = Modifier.height(16.dp))
-
-                    val estado = emprendimiento?.estado
-
-                    val textoEstado = when (estado) {
-                        "aprobado" -> "Aprobado"
-                        "rechazado" -> "Rechazado"
-                        "pendiente" -> "Pendiente de aprobación"
-                        else -> "No disponible"
-                    }
-
-                    val colorEstado = when (estado) {
-                        "aprobado" -> Color(0xFF2E7D32)
-                        "rechazado" -> Color(0xFFC62828)
-                        "pendiente" -> Color(0xFFB45309)
-                        else -> Color.Gray
-                    }
-
-                    Text(
-                        text = "Estado del emprendimiento",
-                        fontWeight = FontWeight.Bold,
-                        color = Negro
-                    )
-
-                    Spacer(modifier = Modifier.height(8.dp))
-
-                    Surface(
-                        color = colorEstado.copy(alpha = 0.12f),
-                        shape = RoundedCornerShape(8.dp)
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        verticalArrangement = Arrangement.spacedBy(12.dp)
                     ) {
                         Text(
-                            text = textoEstado,
-                            color = colorEstado,
-                            fontWeight = FontWeight.SemiBold,
-                            modifier = Modifier.padding(
-                                horizontal = 12.dp,
-                                vertical = 8.dp
-                            )
+                            text = "Mi emprendimiento",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Turquesa
                         )
-                    }
 
-                    if (estado == "rechazado") {
+                        Text(
+                            text = "Actualmente no tienes un emprendimiento registrado.",
+                            color = Negro
+                        )
+
+                        Button(
+                            onClick = {
+                                viewModel.limpiarErrorRegistro()
+                                mostrarFormulario = true
+                            },
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Turquesa
+                            )
+                        ) {
+                            Text("Registrar emprendimiento")
+                        }
+                    }
+                }
+            }
+            if (!cargando && error == null && emprendimiento != null) {
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    border = BorderStroke(1.dp, Turquesa)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .padding(16.dp)
+                            .fillMaxWidth()
+                    ) {
+                        Text(
+                            text = "Mi emprendimiento",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Turquesa
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        DatoFilaEmp(
+                            etiqueta = "Taller:",
+                            valor = emprendimiento?.nombreTaller ?: "—"
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        DatoFilaEmp(
+                            etiqueta = "Categoría:",
+                            valor = emprendimiento?.categoria ?: "—"
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        DatoFilaEmp(
+                            etiqueta = "Rubros:",
+                            valor = emprendimiento?.rubros ?: "—"
+                        )
+
                         Spacer(modifier = Modifier.height(12.dp))
 
                         Text(
-                            text = "Motivo del rechazo:",
+                            text = "Descripción",
                             fontWeight = FontWeight.Bold,
-                            color = colorEstado
-                        )
-
-                        Text(
-                            text = emprendimiento?.motivoRechazo
-                                ?: "No se indicó un motivo",
                             color = Negro
                         )
+
+                        Spacer(modifier = Modifier.height(4.dp))
+
+                        Text(
+                            text = emprendimiento?.descripcion
+                                ?: "Sin descripción",
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = Negro
+                        )
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        HorizontalDivider()
+
+                        Spacer(modifier = Modifier.height(16.dp))
+
+                        val estado = emprendimiento?.estado
+
+                        val textoEstado = when (estado) {
+                            "aprobado" -> "Aprobado"
+                            "rechazado" -> "Rechazado"
+                            "pendiente" -> "Pendiente de aprobación"
+                            else -> "No disponible"
+                        }
+
+                        val colorEstado = when (estado) {
+                            "aprobado" -> Color(0xFF2E7D32)
+                            "rechazado" -> Color(0xFFC62828)
+                            "pendiente" -> Color(0xFFB45309)
+                            else -> Color.Gray
+                        }
+
+                        Text(
+                            text = "Estado del emprendimiento",
+                            fontWeight = FontWeight.Bold,
+                            color = Negro
+                        )
+
+                        Spacer(modifier = Modifier.height(8.dp))
+
+                        Surface(
+                            color = colorEstado.copy(alpha = 0.12f),
+                            shape = RoundedCornerShape(8.dp)
+                        ) {
+                            Text(
+                                text = textoEstado,
+                                color = colorEstado,
+                                fontWeight = FontWeight.SemiBold,
+                                modifier = Modifier.padding(
+                                    horizontal = 12.dp,
+                                    vertical = 8.dp
+                                )
+                            )
+                        }
+
+                        if (estado == "rechazado") {
+                            Spacer(modifier = Modifier.height(12.dp))
+
+                            Text(
+                                text = "Motivo del rechazo:",
+                                fontWeight = FontWeight.Bold,
+                                color = colorEstado
+                            )
+
+                            Text(
+                                text = emprendimiento?.motivoRechazo
+                                    ?: "No se indicó un motivo",
+                                color = Negro
+                            )
+                        }
                     }
                 }
             }
