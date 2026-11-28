@@ -125,4 +125,23 @@ class AuthRepositoryRemote {
             }
         }
     }
+
+    suspend fun iniciarSesionConRol(
+        email: String,
+        contrasena: String,
+        rolEsperado: String
+    ) {
+        iniciarSesion(email, contrasena)
+
+        try {
+            val perfil = PerfilRepositoryRemote().obtenerPerfilActual()
+
+            check(perfil?.rol == rolEsperado) {
+                "La cuenta no corresponde al tipo de usuario seleccionado."
+            }
+        } catch (e: Exception) {
+            cerrarSesion()
+            throw e
+        }
+    }
 }

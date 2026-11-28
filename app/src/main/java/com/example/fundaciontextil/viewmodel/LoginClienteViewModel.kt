@@ -51,9 +51,10 @@ class LoginClienteViewModel : ViewModel() {
             _error.value = null
 
             try {
-                authRepository.iniciarSesion(
+                authRepository.iniciarSesionConRol(
                     emailIngresado,
-                    contraseniaIngresada
+                    contraseniaIngresada,
+                    "cliente"
                 )
 
                 _loginExitoso.value = true
@@ -65,6 +66,9 @@ class LoginClienteViewModel : ViewModel() {
 
                     e.message?.contains("Email not confirmed", true) == true ->
                         "Debes confirmar tu correo electrónico"
+
+                    e.message?.contains("La cuenta no corresponde", true) == true ->
+                        "Esta cuenta no corresponde a un cliente"
 
                     else ->
                         "No se pudo iniciar sesión. Verifica tu conexión e inténtalo nuevamente."
