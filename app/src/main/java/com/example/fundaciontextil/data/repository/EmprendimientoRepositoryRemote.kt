@@ -9,6 +9,18 @@ class EmprendimientoRepositoryRemote {
 
     private val supabase = SupabaseClient.client
 
+    // Obtener emprendimientos aprobados para el catálogo
+    suspend fun obtenerEmprendimientosAprobados(): List<EmprendimientoRemote> {
+        return supabase
+            .from("emprendimientos")
+            .select {
+                filter {
+                    eq("estado", "aprobado")
+                }
+            }
+            .decodeList<EmprendimientoRemote>()
+    }
+
     // Obtener emprendimiento asociado a una emprendedora
     suspend fun obtenerPorEmprendedoraId(
         emprendedoraId: String
