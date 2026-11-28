@@ -43,6 +43,10 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.CancellationException
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import com.example.fundaciontextil.viewmodel.GaleriaViewModel
+import com.example.fundaciontextil.data.model.FotoProductoRemote
 
 private val Turquesa = Color(0xFF168C8C)
 private val Amarillo = Color(0xFFFFD84D)
@@ -56,7 +60,8 @@ fun PantallaEmprendedor(
     onMensajesClick: () -> Unit = {},
     onSolicitudesClick: () -> Unit = {},
     onCerrarSesionClick: () -> Unit = {},
-    viewModel: PerfilEmprendedoraViewModel = viewModel()
+    viewModel: PerfilEmprendedoraViewModel = viewModel(),
+    galeriaViewModel: GaleriaViewModel = viewModel()
 ) {
     val emprendedora by viewModel.emprendedora.collectAsState()
     val emprendimiento by viewModel.emprendimiento.collectAsState()
@@ -70,6 +75,23 @@ fun PantallaEmprendedor(
     val fotoEmprendimientoUrl by viewModel.fotoEmprendimientoUrl.collectAsState()
     val subiendoFotoEmprendimiento by viewModel.subiendoFotoEmprendimiento.collectAsState()
     val errorFotoEmprendimiento by viewModel.errorFotoEmprendimiento.collectAsState()
+    val fotosProductos by galeriaViewModel.fotos.collectAsState()
+    val urlsFotosProductos by galeriaViewModel.urlsFotos.collectAsState()
+    val cargandoGaleria by galeriaViewModel.cargando.collectAsState()
+    val procesandoGaleria by galeriaViewModel.procesando.collectAsState()
+    val errorGaleria by galeriaViewModel.error.collectAsState()
+
+    var seleccionandoFotoProducto by rememberSaveable {
+        mutableStateOf(false)
+    }
+
+    var errorSeleccionProducto by remember {
+        mutableStateOf<String?>(null)
+    }
+
+    var fotoParaEliminar by remember {
+        mutableStateOf<FotoProductoRemote?>(null)
+    }
 
     var seleccionandoFotoEmprendimiento by rememberSaveable {
         mutableStateOf(false)
@@ -91,31 +113,53 @@ fun PantallaEmprendedor(
     }
 
     val procesandoFoto =
-        (leyendoImagen && !seleccionandoFotoEmprendimiento) ||
+        (leyendoImagen &&
+                !seleccionandoFotoEmprendimiento &&
+                !seleccionandoFotoProducto) ||
                 subiendoFoto
 
     val procesandoFotoEmprendimiento =
         (leyendoImagen && seleccionandoFotoEmprendimiento) ||
                 subiendoFotoEmprendimiento
 
+    val procesandoFotoProducto =
+        (leyendoImagen && seleccionandoFotoProducto) ||
+                procesandoGaleria
+
     val ocupado =
-        guardando || procesandoFoto || procesandoFotoEmprendimiento
+        guardando ||
+                procesandoFoto ||
+                procesandoFotoEmprendimiento ||
+                procesandoFotoProducto
 
     var mostrarFormulario by rememberSaveable {
         mutableStateOf(false)
     }
 
 
+
     val selectorImagen = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.GetContent()
     ) { uri ->
         if (uri != null && !ocupado && !cargando) {
-            val esFotoEmprendimiento = seleccionandoFotoEmprendimiento
 
-            if (esFotoEmprendimiento) {
-                errorSeleccionEmprendimiento = null
-            } else {
-                errorSeleccion = null
+            val esFotoEmprendimiento = seleccionandoFotoEmprendimiento
+            val esFotoProducto = seleccionandoFotoProducto
+            val idEmprendimiento = emprendimiento?.id
+
+            when {
+                esFotoProducto -> {
+                    errorSeleccionProducto = null
+                    galeriaViewModel.limpiarError()
+                }
+
+                esFotoEmprendimiento -> {
+                    errorSeleccionEmprendimiento = null
+                }
+
+                else -> {
+                    errorSeleccion = null
+                }
             }
 
             leyendoImagen = true
@@ -158,10 +202,31 @@ fun PantallaEmprendedor(
                             } ?: error("No se pudo leer la imagen")
                     }
 
-                    if (esFotoEmprendimiento) {
-                        viewModel.subirFotoEmprendimiento(imagen, extension)
-                    } else {
-                        viewModel.subirFoto(imagen, extension)
+                    when {
+                        esFotoProducto -> {
+                            val id = idEmprendimiento
+                                ?: error("Emprendimiento no encontrado")
+
+                            galeriaViewModel.agregarFoto(
+                                id,
+                                imagen,
+                                extension
+                            )
+                        }
+
+                        esFotoEmprendimiento -> {
+                            viewModel.subirFotoEmprendimiento(
+                                imagen,
+                                extension
+                            )
+                        }
+
+                        else -> {
+                            viewModel.subirFoto(
+                                imagen,
+                                extension
+                            )
+                        }
                     }
 
                 } catch (e: CancellationException) {
@@ -170,10 +235,15 @@ fun PantallaEmprendedor(
                     val mensaje =
                         "No se pudo seleccionar la imagen. Verifica su formato y tamaño."
 
-                    if (esFotoEmprendimiento) {
-                        errorSeleccionEmprendimiento = mensaje
-                    } else {
-                        errorSeleccion = mensaje
+                    when {
+                        esFotoProducto ->
+                            errorSeleccionProducto = mensaje
+
+                        esFotoEmprendimiento ->
+                            errorSeleccionEmprendimiento = mensaje
+
+                        else ->
+                            errorSeleccion = mensaje
                     }
                 } finally {
                     leyendoImagen = false
@@ -190,6 +260,54 @@ fun PantallaEmprendedor(
         if (emprendimiento != null) {
             mostrarFormulario = false
         }
+    }
+
+    LaunchedEffect(emprendimiento?.id) {
+        emprendimiento?.id?.let {
+            galeriaViewModel.cargarFotos(it)
+        }
+    }
+
+
+    fotoParaEliminar?.let { foto ->
+        AlertDialog(
+            onDismissRequest = {
+                fotoParaEliminar = null
+            },
+            title = {
+                Text("Eliminar fotografía")
+            },
+            text = {
+                Text(
+                    "¿Estás seguro de que deseas eliminar esta fotografía? " +
+                            "Esta acción no se puede deshacer."
+                )
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        fotoParaEliminar = null
+                        errorSeleccionProducto = null
+                        galeriaViewModel.eliminarFoto(foto)
+                    },
+                    enabled = !ocupado && !cargandoGaleria
+                ) {
+                    Text(
+                        text = "Eliminar",
+                        color = MaterialTheme.colorScheme.error
+                    )
+                }
+            },
+            dismissButton = {
+                TextButton(
+                    onClick = {
+                        fotoParaEliminar = null
+                    }
+                ) {
+                    Text("Cancelar")
+                }
+            }
+        )
     }
 
     Surface(
@@ -316,6 +434,7 @@ fun PantallaEmprendedor(
             TextButton(
                 onClick = {
                     seleccionandoFotoEmprendimiento = false
+                    seleccionandoFotoProducto = false
                     selectorImagen.launch("image/*")
                 },
                 enabled = !cargando &&
@@ -554,6 +673,7 @@ fun PantallaEmprendedor(
                         TextButton(
                             onClick = {
                                 seleccionandoFotoEmprendimiento = true
+                                seleccionandoFotoProducto = false
                                 selectorImagen.launch("image/*")
                             },
                             enabled = !ocupado && !cargando,
@@ -693,6 +813,179 @@ fun PantallaEmprendedor(
                     }
                 }
             }
+
+
+            if (!cargando && error == null && emprendimiento?.id != null) {
+
+                Spacer(modifier = Modifier.height(20.dp))
+
+                Card(
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(16.dp),
+                    colors = CardDefaults.cardColors(
+                        containerColor = Color.White
+                    ),
+                    border = BorderStroke(1.dp, Turquesa)
+                ) {
+                    Column(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp)
+                    ) {
+                        Text(
+                            text = "Galería de productos",
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            color = Turquesa
+                        )
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        val fotosActuales = fotosProductos.filter {
+                            it.emprendimientoId == emprendimiento?.id
+                        }
+
+                        when {
+                            cargandoGaleria -> {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.align(
+                                        Alignment.CenterHorizontally
+                                    ),
+                                    color = Turquesa
+                                )
+                            }
+
+                            fotosActuales.isEmpty() -> {
+                                Text(
+                                    text = "Aún no tienes fotografías de productos.",
+                                    color = Color.Gray,
+                                    style = MaterialTheme.typography.bodyMedium
+                                )
+                            }
+
+                            else -> {
+                                LazyRow(
+                                    horizontalArrangement =
+                                        Arrangement.spacedBy(12.dp)
+                                ) {
+                                    items(fotosActuales) { foto ->
+
+                                        val url = foto.id?.let {
+                                            urlsFotosProductos[it]
+                                        }
+
+                                        Column(
+                                            modifier = Modifier.width(140.dp),
+                                            horizontalAlignment =
+                                                Alignment.CenterHorizontally
+                                        ) {
+                                            Box(
+                                                modifier = Modifier
+                                                    .size(140.dp)
+                                                    .clip(RoundedCornerShape(12.dp))
+                                                    .background(
+                                                        Turquesa.copy(alpha = 0.08f)
+                                                    ),
+                                                contentAlignment = Alignment.Center
+                                            ) {
+                                                if (!url.isNullOrBlank()) {
+                                                    SubcomposeAsyncImage(
+                                                        model = url,
+                                                        contentDescription =
+                                                            "Fotografía de producto",
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentScale = ContentScale.Crop,
+                                                        loading = {
+                                                            CircularProgressIndicator(
+                                                                color = Turquesa
+                                                            )
+                                                        },
+                                                        error = {
+                                                            Text(
+                                                                text = "No disponible",
+                                                                color = Color.Gray
+                                                            )
+                                                        }
+                                                    )
+                                                } else {
+                                                    Text(
+                                                        text = "No disponible",
+                                                        color = Color.Gray
+                                                    )
+                                                }
+                                            }
+
+                                            TextButton(
+                                                onClick = {
+                                                    fotoParaEliminar = foto
+                                                },
+                                                enabled = !ocupado && !cargandoGaleria
+                                            ) {
+                                                Text(
+                                                    text = "Eliminar",
+                                                    color = MaterialTheme.colorScheme.error
+                                                )
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+                        Spacer(modifier = Modifier.height(12.dp))
+
+                        Button(
+                            onClick = {
+                                seleccionandoFotoEmprendimiento = false
+                                seleccionandoFotoProducto = true
+                                selectorImagen.launch("image/*")
+                            },
+                            enabled = !ocupado && !cargandoGaleria,
+                            modifier = Modifier.fillMaxWidth(),
+                            colors = ButtonDefaults.buttonColors(
+                                containerColor = Turquesa
+                            )
+                        ) {
+                            if (procesandoFotoProducto) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(22.dp),
+                                    color = Color.White,
+                                    strokeWidth = 2.dp
+                                )
+
+                                Spacer(modifier = Modifier.width(8.dp))
+
+                                Text("Procesando...")
+                            } else {
+                                Text("Agregar fotografía de producto")
+                            }
+                        }
+
+                        (errorSeleccionProducto ?: errorGaleria)?.let { mensaje ->
+                            Spacer(modifier = Modifier.height(8.dp))
+
+                            Text(
+                                text = mensaje,
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodySmall
+                            )
+
+                            TextButton(
+                                onClick = {
+                                    errorSeleccionProducto = null
+                                    emprendimiento?.id?.let {
+                                        galeriaViewModel.cargarFotos(it)
+                                    }
+                                },
+                                enabled = !ocupado && !cargandoGaleria
+                            ) {
+                                Text("Recargar galería")
+                            }
+                        }
+                    }
+                }
+            }
+
             Spacer(modifier = Modifier.weight(1f))
             Spacer(modifier = Modifier.height(24.dp))
 

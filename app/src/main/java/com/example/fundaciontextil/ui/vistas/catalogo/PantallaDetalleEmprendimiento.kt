@@ -32,8 +32,15 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import coil.compose.SubcomposeAsyncImage
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 
 private val Turquesa = Color(0xFF168C8C)
+
 
 @Composable
 fun PantallaDetalleEmprendimiento(
@@ -43,12 +50,26 @@ fun PantallaDetalleEmprendimiento(
     alVolver: () -> Unit,
     alContactar: () -> Unit = {}
 ) {
+    // Estados de la galería de productos
+    val fotos by galeriaViewModel.fotos.collectAsState()
+    val urlsFotos by galeriaViewModel.urlsFotos.collectAsState()
+    val cargandoGaleria by galeriaViewModel.cargando.collectAsState()
+    val errorGaleria by galeriaViewModel.error.collectAsState()
+
+    // Cargar fotografías del emprendimiento seleccionado
+    LaunchedEffect(emprendimiento.id) {
+        emprendimiento.id?.let {
+            galeriaViewModel.cargarFotos(it)
+        }
+    }
+
     Column(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
             .padding(16.dp)
     ) {
+
         Button(onClick = alVolver) {
             Text("Volver al catálogo")
         }
@@ -189,9 +210,99 @@ fun PantallaDetalleEmprendimiento(
 
         Spacer(modifier = Modifier.height(8.dp))
 
-        Text(
-            text = "Galería temporalmente no disponible.",
-            style = MaterialTheme.typography.bodyMedium
-        )
+
+        when {
+            cargandoGaleria -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(160.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Turquesa)
+                }
+            }
+
+            errorGaleria != null -> {
+                Text(
+                    text = errorGaleria.orEmpty(),
+                    color = MaterialTheme.colorScheme.error
+                )
+
+                Button(
+                    onClick = {
+                        emprendimiento.id?.let {
+                            galeriaViewModel.cargarFotos(it)
+                        }
+                    }
+                ) {
+                    Text("Reintentar")
+                }
+            }
+
+            fotos.none { it.emprendimientoId == emprendimiento.id } -> {
+                Text(
+                    text = "Este emprendimiento aún no tiene fotografías de productos.",
+                    style = MaterialTheme.typography.bodyMedium
+                )
+            }
+
+            else -> {
+                LazyRow(
+                    horizontalArrangement = Arrangement.spacedBy(12.dp)
+                ) {
+                    items(
+                        fotos.filter {
+                            it.emprendimientoId == emprendimiento.id
+                        }
+                    ) { foto ->
+
+                        val url = foto.id?.let { urlsFotos[it] }
+
+                        Box(
+                            modifier = Modifier
+                                .width(180.dp)
+                                .height(180.dp)
+                                .clip(RoundedCornerShape(12.dp))
+                                .background(
+                                    Turquesa.copy(alpha = 0.08f)
+                                ),
+                            contentAlignment = Alignment.Center
+                        ) {
+                            if (!url.isNullOrBlank()) {
+                                SubcomposeAsyncImage(
+                                    model = url,
+                                    contentDescription =
+                                        "Fotografía de producto",
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentScale = ContentScale.Crop,
+                                    loading = {
+                                        Box(
+                                            modifier = Modifier.fillMaxSize(),
+                                            contentAlignment = Alignment.Center
+                                        ) {
+                                            CircularProgressIndicator(
+                                                color = Turquesa
+                                            )
+                                        }
+                                    },
+                                    error = {
+                                        Text(
+                                            text = "Imagen no disponible",
+                                            color = Color.Gray
+                                        )
+                                    }
+                                )
+                            } else {
+                                Text(
+                                    text = "Imagen no disponible",
+                                    color = Color.Gray
+                                )
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 }
