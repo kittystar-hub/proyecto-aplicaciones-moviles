@@ -2,10 +2,8 @@ package com.example.fundaciontextil.viewmodel
 import android.app.Application
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.fundaciontextil.model.AppDatabase
-import com.example.fundaciontextil.model.Cliente
-import com.example.fundaciontextil.model.ClienteRepository
-import com.example.fundaciontextil.model.ClienteDao
+import com.example.fundaciontextil.data.repository.AuthRepositoryRemote
+import com.example.fundaciontextil.data.model.ClienteInsertRemote
 import com.example.fundaciontextil.model.Validators
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,7 +13,7 @@ import kotlinx.coroutines.launch
 
 class RegistroClienteViewModel(app: Application) : AndroidViewModel(app) {
 
-    private val repository = ClienteRepository(AppDatabase.get(app).clienteDao())
+    private val authRepository = AuthRepositoryRemote()
 
     private val _uiState = MutableStateFlow(RegistroClienteUiState())
     val uiState: StateFlow<RegistroClienteUiState> = _uiState.asStateFlow()
@@ -87,45 +85,63 @@ class RegistroClienteViewModel(app: Application) : AndroidViewModel(app) {
             return
         }
 
-        _uiState.update { it.copy(guardando = true) }
+        _uiState.update {
+            it.copy(
+                guardando = true,
+                emailError = null
+            )
+        }
 
         viewModelScope.launch {
             try {
                 val emailNormalizado = estado.email.trim().lowercase()
-                val existente = repository.obtenerPorEmail(emailNormalizado)
-                if (existente != null) {
-                    _uiState.update {
-                        it.copy(
-                            guardando = false,
-                            emailError = "Ya existe una cuenta con este correo"
-                        )
-                    }
-                    return@launch
-                }
 
-                val cliente = Cliente(
+                val cliente = ClienteInsertRemote(
                     nombre = estado.nombre.trim(),
                     apellido = estado.apellido.trim(),
                     email = emailNormalizado,
-                    contrasenia = estado.contrasenia,
-                    telefono = estado.telefono.trim(),
-                    fotoUri = estado.fotoUri
+                    telefono = estado.telefono.trim().ifBlank { null },
+                    fotoUrl = null,
+                    authUserId = ""
                 )
 
-                val id = repository.guardar(cliente)
-                _uiState.update { it.copy(guardando = false, guardadoExitoso = id) }
+                authRepository.registrarCliente(
+                    email = emailNormalizado,
+                    contrasena = estado.contrasenia,
+                    cliente = cliente
+                )
+
+                _uiState.update {
+                    it.copy(
+                        guardando = false,
+                        guardadoExitoso = true,
+                        mensajeExito = "Tu cuenta fue creada. Revisa tu correo electrónico para confirmar tu dirección antes de iniciar sesión."
+                    )
+                }
+
             } catch (e: Exception) {
                 _uiState.update {
                     it.copy(
                         guardando = false,
-                        emailError = "Error al guardar: ${e.message}"
+                        emailError = when {
+                            e.message?.contains("already registered", ignoreCase = true) == true ->
+                                "Este correo ya tiene una cuenta registrada."
+
+                            e.message?.contains("invalid", ignoreCase = true) == true ->
+                                "El correo o los datos ingresados no son válidos."
+
+                            else ->
+                                "No se pudo crear la cuenta. Inténtalo nuevamente."
+                        }
                     )
                 }
             }
         }
-    }
 
-    fun consumirGuardado() {
-        _uiState.update { it.copy(guardadoExitoso = null) }
+        fun consumirGuardado() {
+            _uiState.update {
+                it.copy(guardadoExitoso = false)
+            }
+        }
     }
 }

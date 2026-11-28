@@ -51,7 +51,7 @@ fun PantallaLoginCliente(
     val loginExitoso by viewModel.loginExitoso.collectAsState()
 
     LaunchedEffect(loginExitoso) {
-        if (loginExitoso != null) {
+        if (loginExitoso) {
             alLoginExitoso()
             viewModel.consumirLogin()
         }

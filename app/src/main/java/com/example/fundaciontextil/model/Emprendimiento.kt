@@ -25,5 +25,6 @@ data class Emprendimiento(
     val consentimiento: Boolean = false,
     val fechaRegistro: Long = System.currentTimeMillis(),
     val contrasenia: String = "",
+    @androidx.room.ColumnInfo(defaultValue = "''")
     val confirmarConstrasenia: String = ""
 )
