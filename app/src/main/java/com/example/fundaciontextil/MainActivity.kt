@@ -18,7 +18,7 @@ import androidx.compose.runtime.*
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.example.fundaciontextil.model.Emprendimiento
+import com.example.fundaciontextil.data.model.EmprendimientoRemote
 import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
 import com.example.fundaciontextil.ui.vistas.bienvenida.PantallaBienvenida
 import com.example.fundaciontextil.ui.vistas.catalogo.PantallaCatalogo
@@ -38,6 +38,10 @@ import com.example.fundaciontextil.ui.vistas.registro.PantallaSeleccionRegistro
 import com.example.fundaciontextil.ui.vistas.registro.RegistroScreen
 import com.example.fundaciontextil.viewmodel.CatalogoViewModel
 import com.example.fundaciontextil.viewmodel.GaleriaViewModel
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
+import com.example.fundaciontextil.data.remote.SupabaseConnectionTest
+import com.example.fundaciontextil.data.repository.AuthRepositoryRemote
 
 class MainActivity : ComponentActivity() {
 
@@ -45,14 +49,20 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         enableEdgeToEdge()
+        lifecycleScope.launch {
+            SupabaseConnectionTest.verificarConexion()
+        }
 
         setContent {
             FundacionTextilTheme {
                 val catalogoViewModel: CatalogoViewModel = viewModel()
+                val fotosEmprendimientos by
+                catalogoViewModel.fotosEmprendimientos.collectAsState()
+
                 val galeriaViewModel: GaleriaViewModel = viewModel()
 
                 var emprendimientoSeleccionado by remember {
-                    mutableStateOf<Emprendimiento?>(null)
+                    mutableStateOf<EmprendimientoRemote?>(null)
                 }
 
                 var nombreEmprendimientoChat by remember {
@@ -71,8 +81,40 @@ class MainActivity : ComponentActivity() {
                     mutableStateOf("ninguno")
                 }
 
-                var idGuardado by rememberSaveable {
-                    mutableStateOf<Long?>(null)
+                val authRepository = remember {
+                    AuthRepositoryRemote()
+                }
+
+                val coroutineScope = rememberCoroutineScope()
+
+                var cerrandoSesion by remember {
+                    mutableStateOf(false)
+                }
+
+                var errorSesion by remember {
+                    mutableStateOf<String?>(null)
+                }
+
+                val cerrarSesion: () -> Unit = {
+                    if (!cerrandoSesion) {
+                        cerrandoSesion = true
+                        errorSesion = null
+
+                        coroutineScope.launch {
+                            try {
+                                authRepository.cerrarSesion()
+
+                                rolActual = "ninguno"
+                                emprendimientoSeleccionado = null
+                                pantallaActual = "bienvenida"
+
+                            } catch (e: Exception) {
+                                errorSesion = "No se pudo cerrar la sesión"
+                            } finally {
+                                cerrandoSesion = false
+                            }
+                        }
+                    }
                 }
 
                 Scaffold(
@@ -123,9 +165,7 @@ class MainActivity : ComponentActivity() {
                                 RegistroScreen(
                                     modifier = Modifier.padding(espacioInterior),
                                     alVolver = { pantallaActual = "seleccionRegistro" },
-                                    alGuardarExitoso = { id ->
-                                        catalogoViewModel.cargarEmprendimientos()
-                                        idGuardado = id
+                                    alGuardarExitoso = {
                                         pantallaActual = "confirmacion"
                                     }
                                 )
@@ -143,9 +183,10 @@ class MainActivity : ComponentActivity() {
 
                             "confirmacion" -> {
                                 PantallaConfirmacion(
-                                    id = idGuardado,
                                     modifier = Modifier.padding(espacioInterior),
-                                    alVolverAlInicio = { pantallaActual = "bienvenida" }
+                                    alVolverAlInicio = {
+                                        pantallaActual = "bienvenida"
+                                    }
                                 )
                             }
 
@@ -217,11 +258,14 @@ class MainActivity : ComponentActivity() {
                                 val emprendimiento = emprendimientoSeleccionado
                                 if (emprendimiento != null) {
                                     PantallaDetalleEmprendimiento(
+                                        fotoUrl = emprendimiento.id?.let {
+                                            fotosEmprendimientos[it]
+                                        },
                                         emprendimiento = emprendimiento,
                                         galeriaViewModel = galeriaViewModel,
                                         alVolver = { pantallaActual = "catalogo" },
                                         alContactar = {
-                                            nombreEmprendimientoChat = emprendimiento.nombre
+                                            nombreEmprendimientoChat = emprendimiento.nombreTaller
                                             origenMensajeria = "detalle"
                                             pantallaActual = "mensajeria"
                                         }
@@ -232,24 +276,36 @@ class MainActivity : ComponentActivity() {
                             // --- PERFILES Y MENSAJERÍA ---
                             "perfilEmprendedor" -> {
                                 PantallaEmprendedor(
-                                    onVolverClick = { pantallaActual = "catalogo" },
-                                    onMensajesClick = { pantallaActual = "bandeja_entrada" },
-                                    onSolicitudesClick = { }
+                                    onVolverClick = {
+                                        pantallaActual = "catalogo"
+                                    },
+                                    onMensajesClick = {
+                                        pantallaActual = "bandeja_entrada"
+                                    },
+                                    onSolicitudesClick = {},
+                                    onCerrarSesionClick = cerrarSesion
                                 )
                             }
 
                             "perfilCliente" -> {
                                 PantallaUsuario(
-                                    onVolverClick = { pantallaActual = "catalogo" },
-                                    onMensajesClick = { pantallaActual = "bandeja_entrada" },
-                                    onDonacionesClick = { pantallaActual = "catalogo" }
+                                    onVolverClick = {
+                                        pantallaActual = "catalogo"
+                                    },
+                                    onMensajesClick = {
+                                        pantallaActual = "bandeja_entrada"
+                                    },
+                                    onDonacionesClick = {
+                                        pantallaActual = "catalogo"
+                                    },
+                                    onCerrarSesionClick = cerrarSesion
                                 )
                             }
 
                             "perfilAdmin" -> {
                                 PantallaAdministrador(
                                     modifier = Modifier.padding(espacioInterior),
-                                    onVolverClick = { pantallaActual = "bienvenida" }
+                                    onVolverClick = cerrarSesion
                                 )
                             }
 

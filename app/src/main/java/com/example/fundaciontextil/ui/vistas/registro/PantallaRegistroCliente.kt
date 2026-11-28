@@ -31,7 +31,6 @@ import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.MutableState
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -72,13 +71,6 @@ fun PantallaRegistroCliente(
 ) {
     val estado by viewModel.uiState.collectAsState()
     val context = LocalContext.current
-
-    LaunchedEffect(estado.guardadoExitoso) {
-        estado.guardadoExitoso?.let { id ->
-            alRegistroExitoso(id)
-            viewModel.consumirGuardado()
-        }
-    }
 
     val archivoFotoTemporal = rememberSaveable(
         saver = Saver<MutableState<File?>, String>(
@@ -221,6 +213,26 @@ fun PantallaRegistroCliente(
             )
 
             Spacer(Modifier.height(8.dp))
+
+            estado.mensajeExito?.let { mensaje ->
+                Text(
+                    text = mensaje,
+                    color = Turquesa,
+                    fontSize = 14.sp,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth()
+                )
+            }
+
+            if (estado.mensajeExito != null) {
+                OutlinedButton(
+                    onClick = { alRegistroExitoso(0L) },
+                    modifier = Modifier.fillMaxWidth(),
+                    shape = RoundedCornerShape(12.dp)
+                ) {
+                    Text("Ir al inicio de sesión", color = Turquesa)
+                }
+            }
 
             Button(
                 onClick = { viewModel.guardar() },

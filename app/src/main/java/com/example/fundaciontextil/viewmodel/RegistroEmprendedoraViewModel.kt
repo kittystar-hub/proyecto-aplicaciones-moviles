@@ -6,10 +6,7 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
-import com.example.fundaciontextil.model.AppDatabase
 import com.example.fundaciontextil.model.ChileData
-import com.example.fundaciontextil.model.Emprendimiento
-import com.example.fundaciontextil.model.EmprendimientoRepository
 import com.example.fundaciontextil.model.RutValidator
 import com.example.fundaciontextil.model.Validators
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,13 +14,12 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import com.example.fundaciontextil.data.model.EmprendedoraInsertRemote
+import com.example.fundaciontextil.data.repository.AuthRepositoryRemote
 
 class RegistroEmprendedoraViewModel(application: Application) : AndroidViewModel(application) {
 
-    // lazy: la BD solo se abre al presionar "Guardar"(menos uso de recursos)
-    private val repositorio by lazy {
-        EmprendimientoRepository(AppDatabase.get(application).emprendimientoDao())
-    }
+    private val authRepository = AuthRepositoryRemote()
 
     private val _uiState = MutableStateFlow(RegistroUiState())
     val uiState: StateFlow<RegistroUiState> = _uiState.asStateFlow()
@@ -67,7 +63,9 @@ class RegistroEmprendedoraViewModel(application: Application) : AndroidViewModel
     fun actualizarEmail(v: String) = _uiState.update { it.copy(email = v, errores = it.errores.copy(email = null)) }
     fun actualizarConsentimiento(v: Boolean) = _uiState.update { it.copy(consentimiento = v, errores = it.errores.copy(consentimiento = null)) }
 
-    fun consumirGuardado() = _uiState.update { it.copy(guardadoExitoso = false, idGuardado = null) }
+    fun consumirGuardado() = _uiState.update {
+        it.copy(guardadoExitoso = false)
+    }
 
     fun actualizarContrasenia(v: String) = _uiState.update { it.copy(contrasenia = v, errores = it.errores.copy(contrasenia = null)) }
     fun actualizarConfirmarContrasenia(v: String) = _uiState.update { it.copy(confirmarContrasenia = v, errores = it.errores.copy(confirmarContrasenia = null)) }
@@ -130,31 +128,47 @@ class RegistroEmprendedoraViewModel(application: Application) : AndroidViewModel
         if (hayErrores) return
 
         viewModelScope.launch {
-            _uiState.update { it.copy(guardando = true, errorGeneral = null) }
+            _uiState.update {
+                it.copy(guardando = true, errorGeneral = null)
+            }
+
             try {
-                val id = repositorio.guardar(
-                    Emprendimiento(
-                        nombre = s.nombreTaller.trim(),
-                        categoria = s.rubros.firstOrNull() ?: "Textil",
-                        ubicacion = s.comuna,
-                        descripcion = s.descripcion.trim(),
-                        fotoUri = s.fotoUri,
+                authRepository.registrarEmprendedora(
+                    email = s.email.trim(),
+                    contrasena = s.contrasenia,
+                    emprendedora = EmprendedoraInsertRemote(
                         rut = RutValidator.normalizar(s.rut),
+                        nombre = s.nombre.trim(),
+                        apellido = "",
                         rangoEtario = s.rangoEtario,
                         genero = s.genero,
-                        nombreTaller = s.nombreTaller.trim(),
-                        region = s.region,
-                        comuna = s.comuna,
-                        rubros = s.rubros.joinToString(","),
                         whatsapp = Validators.normalizarWhatsapp(s.whatsapp),
                         email = s.email.trim(),
-                        contrasenia = s.contrasenia,
-                        consentimiento = s.consentimiento
-                    )
+                        consentimiento = s.consentimiento,
+                        authUserId = ""
+                    ),
+                    nombreTaller = s.nombreTaller.trim(),
+                    categoria = s.rubros.firstOrNull() ?: "Textil",
+                    rubros = s.rubros.joinToString(","),
+                    region = s.region,
+                    comuna = s.comuna,
+                    descripcion = s.descripcion.trim()
                 )
-                _uiState.update { it.copy(guardando = false, guardadoExitoso = true, idGuardado = id) }
+
+                _uiState.update {
+                    it.copy(
+                        guardando = false,
+                        guardadoExitoso = true
+                    )
+                }
+
             } catch (e: Exception) {
-                _uiState.update { it.copy(guardando = false, errorGeneral = "Error al guardar: ${e.localizedMessage}") }
+                _uiState.update {
+                    it.copy(
+                        guardando = false,
+                        errorGeneral = "Error al registrar: ${e.localizedMessage}"
+                    )
+                }
             }
         }
     }

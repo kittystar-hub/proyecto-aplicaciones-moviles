@@ -26,14 +26,14 @@ fun PantallaLogin(
     alLoginExitoso: () -> Unit,
     viewModel: LoginViewModel = viewModel()
 ) {
-    val rut by viewModel.rut.collectAsState()
+    val email by viewModel.email.collectAsState()
     val contrasenia by viewModel.contrasenia.collectAsState()
     val error by viewModel.error.collectAsState()
     val cargando by viewModel.cargando.collectAsState()
     val loginExitoso by viewModel.loginExitoso.collectAsState()
 
     LaunchedEffect(loginExitoso) {
-        if (loginExitoso != null) {
+        if (loginExitoso) {
             alLoginExitoso()
             viewModel.consumirLogin()
         }
@@ -53,10 +53,10 @@ fun PantallaLogin(
         Spacer(Modifier.height(32.dp))
 
         CampoTexto(
-            valor = rut,
-            onValorCambio = viewModel::actualizarRut,
-            label = "RUT",
-            placeholder = "Ej: 12345678-9",
+            valor = email,
+            onValorCambio = viewModel::actualizarEmail,
+            label = "Correo electrónico",
+            placeholder = "Ej: correo@ejemplo.cl",
             error = null
         )
         Spacer(Modifier.height(16.dp))

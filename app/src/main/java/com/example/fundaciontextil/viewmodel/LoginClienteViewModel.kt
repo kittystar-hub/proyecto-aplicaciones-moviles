@@ -1,19 +1,16 @@
 package com.example.fundaciontextil.viewmodel
 
-import android.app.Application
-import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.example.fundaciontextil.model.AppDatabase
-import com.example.fundaciontextil.model.Cliente
-import com.example.fundaciontextil.model.ClienteRepository
+import com.example.fundaciontextil.data.repository.AuthRepositoryRemote
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 
-class LoginClienteViewModel(app: Application) : AndroidViewModel(app) {
+class LoginClienteViewModel : ViewModel() {
 
-    private val repository = ClienteRepository(AppDatabase.get(app).clienteDao())
+    private val authRepository = AuthRepositoryRemote()
 
     private val _email = MutableStateFlow("")
     val email: StateFlow<String> = _email.asStateFlow()
@@ -27,8 +24,8 @@ class LoginClienteViewModel(app: Application) : AndroidViewModel(app) {
     private val _cargando = MutableStateFlow(false)
     val cargando: StateFlow<Boolean> = _cargando.asStateFlow()
 
-    private val _loginExitoso = MutableStateFlow<Cliente?>(null)
-    val loginExitoso: StateFlow<Cliente?> = _loginExitoso.asStateFlow()
+    private val _loginExitoso = MutableStateFlow(false)
+    val loginExitoso: StateFlow<Boolean> = _loginExitoso.asStateFlow()
 
     fun actualizarEmail(valor: String) {
         _email.value = valor
@@ -41,27 +38,48 @@ class LoginClienteViewModel(app: Application) : AndroidViewModel(app) {
     }
 
     fun iniciarSesion() {
-        val email = _email.value.trim().lowercase()
-        val contrasenia = _contrasenia.value
+        val emailIngresado = _email.value.trim().lowercase()
+        val contraseniaIngresada = _contrasenia.value
 
-        if (email.isBlank() || contrasenia.isBlank()) {
+        if (emailIngresado.isBlank() || contraseniaIngresada.isBlank()) {
             _error.value = "Debes ingresar correo y contraseña"
             return
         }
 
-        _cargando.value = true
         viewModelScope.launch {
-            val cliente = repository.login(email, contrasenia)
-            _cargando.value = false
-            if (cliente != null) {
-                _loginExitoso.value = cliente
-            } else {
-                _error.value = "Correo o contraseña incorrectos"
+            _cargando.value = true
+            _error.value = null
+
+            try {
+                authRepository.iniciarSesionConRol(
+                    emailIngresado,
+                    contraseniaIngresada,
+                    "cliente"
+                )
+
+                _loginExitoso.value = true
+
+            } catch (e: Exception) {
+                _error.value = when {
+                    e.message?.contains("Invalid login credentials", true) == true ->
+                        "Correo o contraseña incorrectos"
+
+                    e.message?.contains("Email not confirmed", true) == true ->
+                        "Debes confirmar tu correo electrónico"
+
+                    e.message?.contains("La cuenta no corresponde", true) == true ->
+                        "Esta cuenta no corresponde a un cliente"
+
+                    else ->
+                        "No se pudo iniciar sesión. Verifica tu conexión e inténtalo nuevamente."
+                }
+            } finally {
+                _cargando.value = false
             }
         }
     }
 
     fun consumirLogin() {
-        _loginExitoso.value = null
+        _loginExitoso.value = false
     }
 }

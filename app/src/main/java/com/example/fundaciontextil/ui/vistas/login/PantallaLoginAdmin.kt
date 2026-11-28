@@ -31,6 +31,7 @@ fun PantallaLoginAdmin(
     val contrasenia by viewModel.contrasenia.collectAsState()
     val error by viewModel.error.collectAsState()
     val loginExitoso by viewModel.loginExitoso.collectAsState()
+    val cargando by viewModel.cargando.collectAsState()
 
     LaunchedEffect(loginExitoso) {
         if (loginExitoso) {
@@ -97,6 +98,7 @@ fun PantallaLoginAdmin(
 
         Button(
             onClick = { viewModel.iniciarSesion() },
+            enabled = !cargando,
             modifier = Modifier
                 .fillMaxWidth()
                 .height(56.dp),
@@ -106,7 +108,19 @@ fun PantallaLoginAdmin(
                 contentColor = Color.White
             )
         ) {
-            Text("Ingresar al panel", fontWeight = FontWeight.Bold, fontSize = 16.sp)
+            if (cargando) {
+                CircularProgressIndicator(
+                    modifier = Modifier.size(24.dp),
+                    color = Color.White,
+                    strokeWidth = 2.dp
+                )
+            } else {
+                Text(
+                    "Ingresar al panel",
+                    fontWeight = FontWeight.Bold,
+                    fontSize = 16.sp
+                )
+            }
         }
 
         Spacer(Modifier.height(16.dp))

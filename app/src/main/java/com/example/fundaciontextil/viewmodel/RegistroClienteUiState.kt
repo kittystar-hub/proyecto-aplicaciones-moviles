@@ -15,5 +15,6 @@ data class RegistroClienteUiState(
     val confirmarContraseniaError: String? = null,
     val telefonoError: String? = null,
     val guardando: Boolean = false,
-    val guardadoExitoso: Long? = null
+    val guardadoExitoso: Boolean = false,
+    val mensajeExito: String? = null
 )

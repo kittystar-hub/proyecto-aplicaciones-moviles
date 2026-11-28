@@ -24,6 +24,8 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.example.fundaciontextil.ui.theme.FundacionTextilTheme
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.example.fundaciontextil.viewmodel.AdministradorViewModel
 
 private val Turquesa = Color(0xFF168C8C)
 private val Amarillo = Color(0xFFFFD84D)
@@ -33,18 +35,18 @@ private val RojoError = Color(0xFFD32F2F)
 private val VerdeAprobado = Color(0xFF2E7D32)
 
 data class SolicitudAdmin(
-    val id: Int,
+    val id: String,
     val nombreEmprendimiento: String,
     val categoria: String,
     val comuna: String,
     val descripcion: String,
-    val responsable: String = "Por confirmar",
-    val correo: String = "contacto@emprendimiento.cl",
-    val telefono: String = "+56 9 0000 0000"
+    val responsable: String = "No registrado",
+    val correo: String = "No registrado",
+    val telefono: String = "No registrado"
 )
 
 data class EmprendimientoAdmin(
-    val id: Int,
+    val id: String,
     val nombre: String,
     val categoria: String,
     val comuna: String,
@@ -56,7 +58,7 @@ data class EmprendimientoAdmin(
 )
 
 data class CuentaRegistradaAdmin(
-    val id: Int,
+    val id: String,
     val nombre: String,
     val rol: String, // "Cliente", "Emprendedor" o "Administrador"
     val correo: String,
@@ -68,125 +70,105 @@ data class CuentaRegistradaAdmin(
 @Composable
 fun PantallaAdministrador(
     modifier: Modifier = Modifier,
-    onVolverClick: () -> Unit = {}
+    onVolverClick: () -> Unit = {},
+    viewModel: AdministradorViewModel = viewModel()
 ) {
     var pestanaSeleccionada by remember { mutableIntStateOf(0) }
 
-    // Datos de ejemplo para Solicitudes pendientes
-    var solicitudes by remember {
-        mutableStateOf(
-            listOf(
-                SolicitudAdmin(
-                    id = 1,
-                    nombreEmprendimiento = "Retazos del Sur",
-                    categoria = "Upcycling / Bolsos",
-                    comuna = "Viña del Mar",
-                    descripcion = "Confección de bolsos y mochilas con mezclilla reciclada.",
-                    responsable = "Valentina Pérez",
-                    correo = "retazosdelsur@gmail.com",
-                    telefono = "+56 9 6123 4567"
-                ),
-                SolicitudAdmin(
-                    id = 2,
-                    nombreEmprendimiento = "Hilo Vivo Taller",
-                    categoria = "Reparación textil",
-                    comuna = "Providencia",
-                    descripcion = "Arreglos y transformación de prendas en desuso.",
-                    responsable = "Sofía Muñoz",
-                    correo = "hilovivo.taller@gmail.com",
-                    telefono = "+56 9 7234 5678"
-                )
-            )
+    val solicitudesRemotas by viewModel.solicitudes.collectAsState()
+    val emprendimientosRemotos by viewModel.emprendimientos.collectAsState()
+    val clientesRemotos by viewModel.clientes.collectAsState()
+    val emprendedorasRemotas by viewModel.emprendedoras.collectAsState()
+    val administradoresRemotos by viewModel.administradores.collectAsState()
+
+    val cargando by viewModel.cargando.collectAsState()
+    val procesando by viewModel.procesando.collectAsState()
+    val error by viewModel.error.collectAsState()
+    val mensaje by viewModel.mensaje.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.cargarDatos()
+    }
+
+    val solicitudes = solicitudesRemotas.mapNotNull { emp ->
+        val id = emp.id ?: return@mapNotNull null
+
+        val responsable = emprendedorasRemotas.firstOrNull {
+            it.id == emp.emprendedoraId
+        }
+
+        SolicitudAdmin(
+            id = id,
+            nombreEmprendimiento = emp.nombreTaller,
+            categoria = emp.categoria.orEmpty(),
+            comuna = emp.comuna.orEmpty(),
+            descripcion = emp.descripcion.orEmpty(),
+            responsable = responsable?.let {
+                "${it.nombre} ${it.apellido}".trim()
+            } ?: "No registrado",
+            correo = responsable?.email ?: "No registrado",
+            telefono = responsable?.whatsapp ?: "No registrado"
         )
     }
 
-    // Datos de ejemplo para Emprendimientos publicados
-    var emprendimientos by remember {
-        mutableStateOf(
-            listOf(
-                EmprendimientoAdmin(
-                    id = 1,
-                    nombre = "Moda Circular Quilpué",
-                    categoria = "Upcycling",
-                    comuna = "Quilpué",
-                    descripcion = "Chaquetas de mezclilla intervenidas a mano.",
-                    responsable = "Daniela Soto",
-                    correo = "modacircular.quilpue@gmail.com",
-                    telefono = "+56 9 8111 2233"
-                ),
-                EmprendimientoAdmin(
-                    id = 2,
-                    nombre = "Costura Sustentable",
-                    categoria = "Reparaciones",
-                    comuna = "Quillota",
-                    descripcion = "Arreglos, zurcido visible y transformación de prendas.",
-                    responsable = "Marcela Díaz",
-                    correo = "costurasustentable@gmail.com",
-                    telefono = "+56 9 9444 5566"
-                )
-            )
+    val emprendimientos = emprendimientosRemotos.mapNotNull { emp ->
+        val id = emp.id ?: return@mapNotNull null
+
+        val responsable = emprendedorasRemotas.firstOrNull {
+            it.id == emp.emprendedoraId
+        }
+
+        EmprendimientoAdmin(
+            id = id,
+            nombre = emp.nombreTaller,
+            categoria = emp.categoria.orEmpty(),
+            comuna = emp.comuna.orEmpty(),
+            descripcion = emp.descripcion.orEmpty(),
+            responsable = responsable?.let {
+                "${it.nombre} ${it.apellido}".trim()
+            } ?: "No registrado",
+            correo = responsable?.email ?: "No registrado",
+            telefono = responsable?.whatsapp ?: "No registrado",
+            estado = "Aprobado"
         )
     }
 
-    // Datos de ejemplo para Cuentas registradas (incluye Administradores)
-    val cuentasRegistradas = remember {
-        listOf(
+    val cuentasRegistradas =
+        clientesRemotos.mapNotNull { cliente ->
+            val id = cliente.id ?: return@mapNotNull null
+
             CuentaRegistradaAdmin(
-                id = 1,
-                nombre = "Lamine Yabien",
+                id = "cliente_$id",
+                nombre = "${cliente.nombre} ${cliente.apellido}".trim(),
                 rol = "Cliente",
-                correo = "LamineYabien777@gmail.com",
-                rut = "12.345.678-9",
-                telefono = "+56 9 3333 2387",
-                direccion = "Calle Tutancamon 418, Providencia"
-            ),
-            CuentaRegistradaAdmin(
-                id = 2,
-                nombre = "Harry Kane",
-                rol = "Emprendedor",
-                correo = "HarryKane@gmail.com",
-                rut = "19.313.298-K",
-                telefono = "+56 9 3113 7689",
-                direccion = "Calle Machu Picchu 3001, Providencia"
-            ),
-            CuentaRegistradaAdmin(
-                id = 3,
-                nombre = "Camila Rojas",
-                rol = "Cliente",
-                correo = "camila.rojas@gmail.com",
-                rut = "20.456.123-4",
-                telefono = "+56 9 8765 4321",
-                direccion = "Av. Libertad 1020, Viña del Mar"
-            ),
-            CuentaRegistradaAdmin(
-                id = 4,
-                nombre = "Taller Textil Circular",
-                rol = "Emprendedor",
-                correo = "contacto@textilcircular.cl",
-                rut = "76.543.210-8",
-                telefono = "+56 9 5544 3322",
-                direccion = "Calle O'Higgins 450, Quillota"
-            ),
-            CuentaRegistradaAdmin(
-                id = 5,
-                nombre = "Admin Fundación",
-                rol = "Administrador",
-                correo = "admin@textilcircular.cl",
-                rut = "18.765.432-1",
-                telefono = "+56 9 9000 1122",
-                direccion = "Sede Central, Viña del Mar"
-            ),
-            CuentaRegistradaAdmin(
-                id = 6,
-                nombre = "Coordinación Textil",
-                rol = "Administrador",
-                correo = "coordinacion@textilcircular.cl",
-                rut = "17.234.567-5",
-                telefono = "+56 9 9000 3344",
-                direccion = "Sede Central, Valparaíso"
+                correo = cliente.email,
+                rut = "No aplica",
+                telefono = cliente.telefono ?: "No registrado",
+                direccion = "No registrada"
             )
-        )
-    }
+        } + emprendedorasRemotas.mapNotNull { emprendedora ->
+            val id = emprendedora.id ?: return@mapNotNull null
+
+            CuentaRegistradaAdmin(
+                id = "emprendedora_$id",
+                nombre = "${emprendedora.nombre} ${emprendedora.apellido}".trim(),
+                rol = "Emprendedor",
+                correo = emprendedora.email,
+                rut = emprendedora.rut,
+                telefono = emprendedora.whatsapp ?: "No registrado",
+                direccion = "No registrada"
+            )
+        } + administradoresRemotos.map { administrador ->
+            CuentaRegistradaAdmin(
+                id = "administrador_${administrador.id}",
+                nombre = "Administrador",
+                rol = "Administrador",
+                correo = "No disponible",
+                rut = "No registrado",
+                telefono = "No registrado",
+                direccion = "No registrada"
+            )
+        }
 
     val pestanas = listOf(
         "Solicitudes (${solicitudes.size})",
@@ -204,7 +186,7 @@ fun PantallaAdministrador(
     var emprendimientoAEliminar by remember { mutableStateOf<EmprendimientoAdmin?>(null) }
     var motivoEliminacion by remember { mutableStateOf("Vocabulario inapropiado") }
 
-    var mensajeEstado by remember { mutableStateOf<String?>(null) }
+    val mensajeEstado = error ?: mensaje
 
     Surface(
         modifier = modifier.fillMaxSize(),
@@ -223,7 +205,10 @@ fun PantallaAdministrador(
                     .padding(horizontal = 12.dp, vertical = 12.dp),
                 verticalAlignment = Alignment.CenterVertically
             ) {
-                IconButton(onClick = onVolverClick) {
+                IconButton(
+                    onClick = onVolverClick,
+                    enabled = !procesando && !cargando
+                ) {
                     Icon(
                         imageVector = Icons.AutoMirrored.Filled.ArrowBack,
                         contentDescription = "Volver",
@@ -278,15 +263,48 @@ fun PantallaAdministrador(
                         verticalAlignment = Alignment.CenterVertically
                     ) {
                         Text(
-                            text = mensajeEstado!!,
+                            text = mensajeEstado,
                             style = MaterialTheme.typography.bodySmall,
                             color = Negro,
                             modifier = Modifier.weight(1f)
                         )
-                        TextButton(onClick = { mensajeEstado = null }) {
+                        TextButton(
+                            onClick = {
+                                viewModel.limpiarMensaje()
+                                viewModel.limpiarError()
+                            }
+                        ) {
                             Text("OK", color = Turquesa, fontWeight = FontWeight.Bold)
                         }
                     }
+                }
+            }
+
+            if (procesando) {
+                LinearProgressIndicator(
+                    modifier = Modifier.fillMaxWidth(),
+                    color = Turquesa
+                )
+            }
+
+            if (cargando) {
+                Box(
+                    modifier = Modifier.fillMaxSize(),
+                    contentAlignment = Alignment.Center
+                ) {
+                    CircularProgressIndicator(color = Turquesa)
+                }
+
+                return@Column
+            }
+
+            if (error != null) {
+                TextButton(
+                    onClick = { viewModel.cargarDatos() },
+                    enabled = !procesando,
+                    modifier = Modifier.align(Alignment.CenterHorizontally)
+                ) {
+                    Text("Actualizar datos")
                 }
             }
 
@@ -339,19 +357,9 @@ fun PantallaAdministrador(
                                         ) {
                                             Button(
                                                 onClick = {
-                                                    emprendimientos = emprendimientos + EmprendimientoAdmin(
-                                                        id = (emprendimientos.maxOfOrNull { it.id } ?: 0) + 1,
-                                                        nombre = solicitud.nombreEmprendimiento,
-                                                        categoria = solicitud.categoria,
-                                                        comuna = solicitud.comuna,
-                                                        descripcion = solicitud.descripcion,
-                                                        responsable = solicitud.responsable,
-                                                        correo = solicitud.correo,
-                                                        telefono = solicitud.telefono
-                                                    )
-                                                    solicitudes = solicitudes.filterNot { it.id == solicitud.id }
-                                                    mensajeEstado = "Solicitud '${solicitud.nombreEmprendimiento}' aprobada."
+                                                    viewModel.aprobarEmprendimiento(solicitud.id)
                                                 },
+                                                enabled = !procesando && !cargando,
                                                 modifier = Modifier.weight(1f),
                                                 colors = ButtonDefaults.buttonColors(containerColor = VerdeAprobado),
                                                 shape = RoundedCornerShape(12.dp)
@@ -366,6 +374,7 @@ fun PantallaAdministrador(
                                                     solicitudARechazar = solicitud
                                                     motivoRechazo = ""
                                                 },
+                                                enabled = !procesando && !cargando,
                                                 modifier = Modifier.weight(1f),
                                                 border = BorderStroke(1.dp, RojoError),
                                                 shape = RoundedCornerShape(12.dp)
@@ -657,11 +666,18 @@ fun PantallaAdministrador(
             confirmButton = {
                 Button(
                     onClick = {
-                        val nombre = solicitudARechazar!!.nombreEmprendimiento
-                        solicitudes = solicitudes.filterNot { it.id == solicitudARechazar!!.id }
-                        mensajeEstado = "Solicitud '$nombre' rechazada. Motivo: ${motivoRechazo.ifBlank { "No especificado" }}"
+                        solicitudARechazar?.let { solicitud ->
+                            viewModel.rechazarEmprendimiento(
+                                id = solicitud.id,
+                                motivo = motivoRechazo
+                            )
+                        }
+
                         solicitudARechazar = null
                     },
+                    enabled = !procesando &&
+                            !cargando &&
+                            motivoRechazo.isNotBlank(),
                     colors = ButtonDefaults.buttonColors(containerColor = RojoError)
                 ) {
                     Text("Confirmar rechazo")
@@ -706,11 +722,13 @@ fun PantallaAdministrador(
             confirmButton = {
                 Button(
                     onClick = {
-                        val nombre = emprendimientoAEliminar!!.nombre
-                        emprendimientos = emprendimientos.filterNot { it.id == emprendimientoAEliminar!!.id }
-                        mensajeEstado = "'$nombre' eliminado ($motivoEliminacion)."
+                        emprendimientoAEliminar?.let { emprendimiento ->
+                            viewModel.eliminarEmprendimiento(emprendimiento.id)
+                        }
+
                         emprendimientoAEliminar = null
                     },
+                    enabled = !procesando && !cargando,
                     colors = ButtonDefaults.buttonColors(containerColor = RojoError)
                 ) {
                     Text("Confirmar eliminación")
