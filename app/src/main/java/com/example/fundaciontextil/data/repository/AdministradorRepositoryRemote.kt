@@ -36,4 +36,50 @@ class AdministradorRepositoryRemote {
             }
         }.decodeList<PerfilRemote>()
     }
+
+    suspend fun aprobarEmprendimiento(id: String) {
+        supabase.from("emprendimientos").update(
+            {
+                set("estado", "aprobado")
+                set("motivo_rechazo", null as String?)
+            }
+        ) {
+            filter {
+                eq("id", id)
+                eq("estado", "pendiente")
+            }
+            select()
+        }.decodeSingle<EmprendimientoRemote>()
+    }
+
+    suspend fun rechazarEmprendimiento(
+        id: String,
+        motivo: String
+    ) {
+        require(motivo.isNotBlank()) {
+            "Debes indicar un motivo de rechazo."
+        }
+
+        supabase.from("emprendimientos").update(
+            {
+                set("estado", "rechazado")
+                set("motivo_rechazo", motivo.trim())
+            }
+        ) {
+            filter {
+                eq("id", id)
+                eq("estado", "pendiente")
+            }
+            select()
+        }.decodeSingle<EmprendimientoRemote>()
+    }
+
+    suspend fun eliminarEmprendimiento(id: String) {
+        supabase.from("emprendimientos").delete {
+            filter {
+                eq("id", id)
+            }
+            select()
+        }.decodeSingle<EmprendimientoRemote>()
+    }
 }
